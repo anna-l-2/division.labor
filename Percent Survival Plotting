@@ -1,0 +1,31 @@
+> data <- data.frame(
++ time = rep(c(1, 2, 3, 4, 5, 6), times = 10),
++ survival = c(
++ 100, 100, 100, 100, 100, 100,
++ 87.5, 100, 100, 75, 100, 37.5,
++ 100, 100, 100, 100, 100, 100,
++ 100, 100, 100, 62.5, 75, 50,
++ 100, 100, 100, 100, 100, 100,
++ 100, 100, 100, 0, 100, 50,
++ 100, 100, 100, 100, 100, 100,
++ 100, 100, 100, 87.5, 75, 25,
++ 100, 100, 100, 100, 100, 100,
++ 100, 12.5, 0, 87.5, 100, 37.5
++ ),
++ strain = rep(c("Delta6-Ambient", "SPOIIE-Ambient", "Delta6-0%RH", "SPOIIE-0%RH", "Delta6-25%RH", "SPOIIE-25%RH", "Delta6-75%RH", "SPOIIE-75%RH", "Delta6-100%RH", "SPOIIE-100%RH"), each = 6)
++ )
+
+
+> ggplot(data, aes(x = time, y = survival, color = strain, group = strain)) +
++ geom_line(size = 1.2) +            # Thicker lines
++ geom_point(size = 3, shape = 21, fill = "white") +  # Larger points with a specific shape
++ labs(x = "Time (days)", y = "Percent Survival (%)", color = "Strain") +  # Axis labels
++ scale_x_continuous(breaks = seq(0, 6, by = 1)) +    # Custom x-axis ticks
++ scale_y_continuous(limits = c(0, 100), breaks = seq(0, 100, by = 20)) +  # Custom y-axis ticks
++ theme_minimal(base_size = 15) +    # Adjust base font size
++ theme(
++ legend.position = "top",         # Move legend to the top
++ legend.title = element_text(face = "bold"),  # Bold legend title
++ panel.grid.major = element_line(color = "grey80", size = 0.5),  # Subtle grid lines
++ panel.grid.minor = element_blank()  # Remove minor grid lines
++ )
