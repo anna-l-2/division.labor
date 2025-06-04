@@ -1,0 +1,94 @@
+---
+title: "Dessication5"
+author: "Anna L"
+date: "2025-05-22"
+output: html_document
+---
+
+```{r}
+library(tidyr)
+library(ggplot2)
+library(stringr)
+library(dplyr)
+library(tidyverse)
+require(survival)
+require(extrafont)
+
+
+
+
+
+theme_set(theme_classic() +
+  theme(axis.title = element_text(size = 16),
+        axis.title.x = element_text(margin = margin(t = 15, b = 15)),
+        axis.title.y = element_text(margin = margin(l = 15, r = 15)),
+        axis.text = element_text(size = 13),
+        axis.text.x = element_text(margin = margin(t = 5)),
+        axis.text.y = element_text(margin = margin(r = 5)),
+        #axis.line.x = element_line(linewidth = 1),
+        #axis.line.y = element_line(linewidth = 1),
+        axis.line.x = element_blank(),
+        axis.line.y = element_blank(),
+        axis.ticks.x = element_line(linewidth = 1),
+        axis.ticks.y = element_line(linewidth = 1),
+        axis.ticks.length = unit(.1, "in"),
+        panel.border = element_rect(color = "grey20", fill = NA, linewidth = 1.5),
+        legend.text = element_text(size = 14),
+        strip.text = element_text(size = 14),
+        strip.background = element_blank()
+        ))
+```
+
+```{r}
+setwd("C:/Users/ajl21/Indiana University/Lennon, Jay - DoL/Anna/Dessication_assay/Survivorship")
+
+data <- read.csv("20250522_1635_DA5.csv")# 1 is D6 and 2 is SPO; Event - 0 if lived 1 if died
+data
+data$Strain <- factor(data$Strain) 
+
+data.a <-arrange(data, Day)
+data.a
+surv <-data.a
+
+
+```
+
+```{r}
+biofsurv <- Surv(surv$Day,surv$Event)
+print(biofsurv)
+biofsurv.fit <- survfit(biofsurv ~ surv$Strain, conf.int = TRUE, 
+                type = "kaplan-meier")
+biofsurv.diff <- survdiff(Surv(surv$Day,surv$Event) ~ surv$Strain, data = surv)
+```
+
+```{r}
+par(mar = c(5, 7, 5, 7))
+plot(biofsurv.fit, conf.int = TRUE, mark.time = FALSE,
+  xlim = c(0,5), ylim = c(0,1),
+  lty = c(1,3,3,1,3,3),
+  col = c("black", "grey", "grey", "black", "grey", "grey"),
+  xlab = "Time (d)",
+  ylab = "", cex.lab = 1.5, cex.axis = 1.2, las = 1, lwd = 2,
+  yaxt = "n", xaxt = "n")
+  box(lwd=2)
+
+mtext("Survivorship", side = 2, outer = TRUE, cex = 1.5, line = -3, adj = 0.5)
+
+axis(side = 2, labels = TRUE, lwd.ticks = 2, las = 1, cex.axis = 1.25,
+     at = c(0, 0.25, 0.5, 0.75, 1.0))
+axis(side = 4, labels = FALSE, lwd.ticks = 2,
+     at = c(0, 0.25, 0.5, 0.75, 1.0))
+axis(side = 1, labels = TRUE, lwd.ticks = 2, las = 1, cex.axis = 1.25,
+     at = c(0, 1, 2, 3, 4))
+axis(side = 3, labels = FALSE, lwd.ticks = 2, las = 1, cex.axis = 1.25,
+     at = c(0, 24, 48, 72, 96))
+text(4.5, 0.98, "D6", cex = 1.25)
+text(4.5, 0.2, "SPOIIE", cex = 1.25)
+```
+
+```{r}
+plate.aov <- aov(Event ~ Strain, data = data)
+summary(plate.aov)
+
+
+```
