@@ -1,0 +1,80 @@
+---
+title: "Dessication1"
+author: "Anna L"
+date: "2025-05-14"
+output: pdf_document
+---
+```{r}
+#install.packages("ggplot")
+#install.packages("tidyverse")
+#install.packages("stringr")
+#install.packages("dplyr")
+library(tidyr)
+library(ggplot2)
+library(stringr)
+library(dplyr)
+
+theme_set(theme_classic() +
+  theme(axis.title = element_text(size = 16),
+        axis.title.x = element_text(margin = margin(t = 15, b = 15)),
+        axis.title.y = element_text(margin = margin(l = 15, r = 15)),
+        axis.text = element_text(size = 13),
+        axis.text.x = element_text(margin = margin(t = 5)),
+        axis.text.y = element_text(margin = margin(r = 5)),
+        #axis.line.x = element_line(linewidth = 1),
+        #axis.line.y = element_line(linewidth = 1),
+        axis.line.x = element_blank(),
+        axis.line.y = element_blank(),
+        axis.ticks.x = element_line(linewidth = 1),
+        axis.ticks.y = element_line(linewidth = 1),
+        axis.ticks.length = unit(.1, "in"),
+        panel.border = element_rect(color = "grey20", fill = NA, linewidth = 1.5),
+        legend.text = element_text(size = 14),
+        strip.text = element_text(size = 14),
+        strip.background = element_blank()
+        ))
+```
+
+```{r}
+#Read in data
+setwd("C:/Users/ajl21/Indiana University/Lennon, Jay - DoL/Anna/Dessication_assay/OD600_reads/")
+data <- read.csv("2025_0511_dessication1_master.csv")
+data
+data <- data %>%
+  rename_with(~ str_replace(., "X", ""))
+data
+data.g <- gather(data, "Incubation_length", "OD600", 2:6)
+data.g
+data.g$Incubation_length <- factor(data.g$Incubation_length, levels = c("24", "48", "72", "96", "120"))
+data.g$dessication <- as.numeric(data.g$dessication)
+
+des_label <- c(
+  "2" = "2 hrs desiccated", 
+  "3" = "3 hrs desiccated", 
+  "4" = "4 hrs desiccated", 
+  "5" = "5 hrs desiccated"
+)
+
+ggplot(data.g, aes(Incubation_length, OD600, color = Type)) +
+  geom_boxplot() +
+  xlab("Length of Incubation") +
+  ylab("OD600") +
+  facet_wrap(~dessication, labeller = labeller(dessication = des_label))+ ggtitle ("Delta6 and SPOIIE OD600")
+```
+
+```{r}
+#ANOVA three way interaction- how is OD600 impacted by Type, dessicaiton length, and incubation length
+
+aov <-aov(OD600 ~ Type*dessication*Incubation_length,
+          data = data.g)
+summary(aov)
+tukey.aov <- TukeyHSD(aov)
+print(tukey.aov)
+```
+
+```{r}
+aov.type <- aov (OD600 ~ Type, data = data.g)
+summary(aov.type)
+tukey.type <- TukeyHSD(aov.type)
+print(tukey.type)
+```
