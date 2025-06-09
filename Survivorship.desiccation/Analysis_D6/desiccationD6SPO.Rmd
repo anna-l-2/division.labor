@@ -37,15 +37,13 @@ theme_set(theme_classic() +
 ```
 
 ```{r}
-setwd("C:/Users/ajl21/Indiana University/Lennon, Jay - DoL/Anna/Dessication_assay/Survivorship")
+setwd("C:/Users/ajl21/github/division.labor/Survivorship.desiccation/Data_D6/")
 #data: Turbidity 0 alive 1 death; Strain 1 Delta 6 0 SPOIIE; 
 #Experiment 5- desiccation 24 hr; Experiment 6 - desiccation 48 hr; desiccation 7 - 4 hours 
 data <- read.csv("20250529_1418_DA_D6SPO.csv")# 1 is D6 and 2 is SPO; Event - 0 if lived 1 if died
 data
 data$Strain <- factor(data$Strain) 
 surv <-data
-
-
 ```
 
 ```{r}
@@ -53,54 +51,40 @@ biofsurv <- Surv(surv$Day,surv$Event)
 print(biofsurv)
 biofsurv.fit <- survfit(biofsurv ~ surv$Strain, conf.int = TRUE, 
                 type = "kaplan-meier")
-biofsurv.diff <- survdiff(Surv(surv$Hour,surv$Event) ~ surv$Strain, data = surv)
+biofsurv.diff <- survdiff(Surv(surv$Day,surv$Event) ~ surv$Strain, data = surv)
+
+print(biofsurv)
 ```
 
 ```{r}
-# Convert numeric Strain to a factor with meaningful labels
-surv$Strain <- factor(surv$Strain, levels = c(1, 2), labels = c("Delta6", "SPOIIE"))
+par(mar = c(5, 7, 5, 7))
+plot(biofsurv.fit, conf.int = TRUE, mark.time = FALSE,
+  xlim = c(0,5), ylim = c(0,1),
+  lty = c(1,3,3,1,3,3),
+  col = c("black", "grey", "grey", "black", "grey", "grey"),
+  xlab = "Time (d)",
+  ylab = "", cex.lab = 1.5, cex.axis = 1.2, las = 1, lwd = 2,
+  yaxt = "n", xaxt = "n")
+  box(lwd=2)
 
-# Create survival object
-biofsurv <- Surv(surv$Day, surv$Event)
+mtext("Survivorship", side = 2, outer = TRUE, cex = 1.5, line = -3, adj = 0.5)
 
-# Fit Kaplan-Meier model
-biofsurv.fit <- survfit(biofsurv ~ Strain, data = surv)
-
-# Define colors for each strain
-strain_levels <- levels(surv$Strain)  # "WT", "Mutant"
-strain_colors <- setNames(c("blue", "red"), strain_levels)
-
-# Extract group labels from strata
-strata_names <- names(biofsurv.fit$strata)  # e.g., "Strain=WT", "Strain=Mutant"
-strain_labels <- sub("Strain=", "", strata_names)
-
-# Plot survival curves
-plot(biofsurv.fit,
-     col = strain_colors[strain_labels],
-     lty = 1,
-     conf.int = TRUE,
-     mark.time = FALSE,
-     xlab = "Time (day)", ylab = "Survival Probability",
-     main = "Survivorship Over Time",
-     xlim = c(0, 5), ylim = c(0, 1),
-     cex.lab = 1.5, cex.axis = 1.2, las = 1, lwd = 2,
-     yaxt = "n", xaxt = "n")
-
-# Add axes and box
-axis(1, at = seq(0, 5, by = 1), cex.axis = 1.2)
-axis(2, at = seq(0, 1, by = 0.2), las = 1, cex.axis = 1.2)
-box(lwd = 2)
-
-# Add legend
-legend("topright", legend = strain_levels,
-       col = strain_colors, lty = 1, lwd = 2)
-
-
+axis(side = 2, labels = T, lwd.ticks = 2, las = 1, cex.axis = 1.25, 
+       at = c(0, 0.25, 0.5, 0.75, 1.0))
+axis(side = 4, labels = F, lwd.ticks = 2, 
+       at = c(0, 0.25, 0.5, 0.75, 1.0))
+axis(side = 1, labels = T, lwd.ticks = 2, las = 1, cex.axis = 1.25, 
+       at = c(0, 1, 2, 3, 4, 5))
+axis(side = 3, labels = F, lwd.ticks = 2, las = 1, cex.axis = 1.25, 
+       at = c(0, 10, 20, 30, 40, 50))
+text(4.5, 0.95, "D6", cex = 1.25)
+text(4.5, 0.2, "SPOIIE", cex = 1.25)
 ```
+
+
 
 ```{r}
 plate.aov <- aov(Event ~ Strain, data = data)
 summary(plate.aov)
-
 
 ```
