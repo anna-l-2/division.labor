@@ -1,5 +1,5 @@
 ---
-title: "Dessication 168 and SPOIIE"
+title: "Dessication Evolution"
 author: "Anna L"
 date: "2025-06-12"
 output:
@@ -42,7 +42,7 @@ theme_set(theme_classic() +
 setwd("C:/Users/ajl21/github/division.labor/Survivorship.desiccation/Data_D6/")
 #data: Turbidity 0 alive 1 death; Strain 1 Delta 6 0 SPOIIE; 
 #Experiment 5- desiccation 24 hr; Experiment 6 - desiccation 48 hr; desiccation 7 - 4 hours 
-data <- read.csv("20250612_1322_S2_3.csv")# 1 is D6 and 2 is SPO; Event - 0 if lived 1 if died
+data <- read.csv("20250624_1206_Surv_master.csv")# 1 is D6 and 2 is SPO; Event - 0 if lived 1 if died
 data
 data$Strain <- factor(data$Strain) 
 surv <-data
@@ -86,7 +86,7 @@ axis(side = 1, labels = T, lwd.ticks = 2, las = 1, cex.axis = 1.25,
 axis(side = 3, labels = F, lwd.ticks = 2, las = 1, cex.axis = 1.25, 
        at = c(0, 10, 20, 30, 40, 50))
 text(32, 0.97, "168", cex = 1)
-text(31, 0.47, "SPOIIE", cex = 1)
+text(31, 0.3, "SPOIIE", cex = 1)
 ```
 
 
