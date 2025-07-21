@@ -1,0 +1,104 @@
+---
+title: "Dessication Evolution"
+author: "Anna L"
+date: "2025-06-12"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r}
+library(tidyr)
+library(ggplot2)
+library(stringr)
+library(dplyr)
+library(tidyverse)
+require(survival)
+require(extrafont)
+
+
+theme_set(theme_classic() +
+  theme(axis.title = element_text(size = 16),
+        axis.title.x = element_text(margin = margin(t = 15, b = 15)),
+        axis.title.y = element_text(margin = margin(l = 15, r = 15)),
+        axis.text = element_text(size = 13),
+        axis.text.x = element_text(margin = margin(t = 5)),
+        axis.text.y = element_text(margin = margin(r = 5)),
+        #axis.line.x = element_line(linewidth = 1),
+        #axis.line.y = element_line(linewidth = 1),
+        axis.line.x = element_blank(),
+        axis.line.y = element_blank(),
+        axis.ticks.x = element_line(linewidth = 1),
+        axis.ticks.y = element_line(linewidth = 1),
+        axis.ticks.length = unit(.1, "in"),
+        panel.border = element_rect(color = "grey20", fill = NA, linewidth = 1.5),
+        legend.text = element_text(size = 14),
+        strip.text = element_text(size = 14),
+        strip.background = element_blank()
+        ))
+```
+
+```{r}
+setwd("C:/Users/ajl21/github/division.labor/")
+#data: Turbidity 0 alive 1 death; Strain 1 Delta 6 0 SPOIIE; 
+#Experiment 5- desiccation 24 hr; Experiment 6 - desiccation 48 hr; desiccation 7 - 4 hours 
+
+data$Strain <- factor(data$Strain) 
+surv <-data
+```
+
+```{r}
+biofsurv <- Surv(surv$Hour,surv$Event)
+print(biofsurv)
+biofsurv.fit <- survfit(biofsurv ~ surv$Strain, conf.int = TRUE, 
+                type = "kaplan-meier")
+biofsurv.diff <- survdiff(Surv(surv$Hour,surv$Event) ~ surv$Strain, data = surv)
+
+print(biofsurv)
+```
+
+```{r}
+fit.data <- summary(biofsurv.fit )
+fit.data
+```
+
+```{r}
+par(mar = c(5, 7, 5, 7))
+plot(biofsurv.fit, conf.int = TRUE, mark.time = FALSE,
+  xlim = c(0,32), ylim = c(0,1),
+  lty = c(1,3,3,1,3,3),
+  col = c("black", "grey", "grey", "black", "grey", "grey"),
+  xlab = "Time (hr)",
+  ylab = "", cex.lab = 1.5, cex.axis = 1.2, las = 1, lwd = 2,
+  main = "Desiccation Over 31 Hours",
+  yaxt = "n", xaxt = "n")
+  box(lwd=2)
+
+mtext("Survivorship", side = 2, outer = TRUE, cex = 1.5, line = -3, adj = 0.5)
+
+axis(side = 2, labels = T, lwd.ticks = 2, las = 1, cex.axis = 1.25, 
+       at = c(0, 0.25, 0.5, 0.75, 1.0))
+axis(side = 4, labels = F, lwd.ticks = 2, 
+       at = c(0, 0.25, 0.5, 0.75, 1.0))
+axis(side = 1, labels = T, lwd.ticks = 2, las = 1, cex.axis = 1.25, 
+       at = c(5, 10, 15, 20, 25, 30, 35))
+axis(side = 3, labels = F, lwd.ticks = 2, las = 1, cex.axis = 1.25, 
+       at = c(0, 10, 20, 30, 40, 50))
+text(32, 0.97, "168", cex = 1)
+text(31, 0.3, "SPOIIE", cex = 1)
+```
+
+
+```{r}
+plate.aov <- aov(Event ~ Strain, data = data)
+summary(plate.aov)
+
+```
+
+```{r}
+plot(biofsurv.fit, fun = "cumhaz", col = c("black", "grey"), lty = c(1, 3), lwd = 2,
+     xlab = "Time (hr)", ylab = "Cumulative Hazard", main = "Cumulative Hazard By Strain")
+text(29, 0.12, "168", cex = 1)
+text(29, 0.7, "SPOIIE", cex = 1)
+
+```
