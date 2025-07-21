@@ -1,0 +1,261 @@
+---
+title: "Dessication Evolution"
+author: "Anna L"
+date: "2025-06-12"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r}
+library(tidyr)
+library(ggplot2)
+library(stringr)
+library(dplyr)
+library(tidyverse)
+require(survival)
+library(purrr)
+require(extrafont)
+library(tidyr)
+
+#install.packages("RColorBrewer")
+
+theme_set(theme_classic() +
+  theme(axis.title = element_text(size = 16),
+        axis.title.x = element_text(margin = margin(t = 15, b = 15)),
+        axis.title.y = element_text(margin = margin(l = 15, r = 15)),
+        axis.text = element_text(size = 13),
+        axis.text.x = element_text(margin = margin(t = 5)),
+        axis.text.y = element_text(margin = margin(r = 5)),
+        #axis.line.x = element_line(linewidth = 1),
+        #axis.line.y = element_line(linewidth = 1),
+        axis.line.x = element_blank(),
+        axis.line.y = element_blank(),
+        axis.ticks.x = element_line(linewidth = 1),
+        axis.ticks.y = element_line(linewidth = 1),
+        axis.ticks.length = unit(.1, "in"),
+        panel.border = element_rect(color = "grey20", fill = NA, linewidth = 1.5),
+        legend.text = element_text(size = 14),
+        strip.text = element_text(size = 14),
+        strip.background = element_blank()
+        ))
+```
+
+```{r}
+setwd("C:/Users/ajl21/github/division.labor/Evolution_desiccation/")
+#data: Turbidity 0 alive 1 death; A-D: 168 WT E-H: SPOIIE
+p1 <- read.csv("20250715_1530_evolution_desiccation_plate1.csv")
+p2 <- read.csv("20250715_1530_evolution_desiccation_plate2.csv")
+p3 <- read.csv("20250715_1530_evolution_desiccation_plate3.csv")
+p4 <- read.csv("20250715_1530_evolution_desiccation_plate4.csv")
+p5 <- read.csv("20250715_1530_evolution_desiccation_plate5.csv")
+
+strain.label <- function(df) {
+  df %>%
+    mutate(Strain = case_when(
+      substr(Well, 1, 1) %in% c("A", "B", "C", "D") ~ "168",
+      substr(Well, 1, 1) %in% c("E", "F", "G", "H") ~ "SPO",
+      TRUE ~ "Unknown"
+    ))
+}
+p1 <- strain.label(p1)
+p2 <- strain.label(p2)
+p3 <- strain.label(p3)
+p4 <- strain.label(p4)
+p5 <- strain.label(p5)
+#All
+plates <- list(p1 = p1, p2 = p2, p3 = p3, p4 = p4, p5 = p5)
+p.all <- bind_rows(plates, .id = "Plate")
+
+
+p.all <- p.all %>%
+  mutate(Strain = case_when(
+    substr(Well, 1, 1) %in% c("A", "B", "C", "D") ~ "168",
+    substr(Well, 1, 1) %in% c("E", "F", "G", "H") ~ "SPO",
+    TRUE ~ "Unknown"
+  ))
+p.all
+
+```
+
+
+```{r}
+count_long <- function(df) {
+  df %>%
+    filter(Strain %in% c("168", "SPO")) %>%
+    pivot_longer(cols = starts_with("Cycle"),
+                 names_to = "Cycle",
+                 values_to = "Value") %>%
+    group_by(Strain, Cycle, Value) %>%
+    summarise(Count = n(), .groups = "drop") %>%
+    pivot_wider(names_from = Value, values_from = Count, values_fill = 0) }
+
+
+
+
+mortality <- function(df) {
+  df %>%
+    mutate(Mortality = `1` / 48)
+}
+```
+
+
+```{r}
+p1.count <-count_long(p1)
+p2.count <-count_long(p2)
+p3.count <-count_long(p3)
+p4.count <-count_long(p4)
+p5.count <-count_long(p5)
+
+p1.count
+
+p1.mort <-mortality(p1.count) %>% mutate(Plate = "P1")
+p2.mort <-mortality(p2.count) %>% mutate(Plate = "P2")
+p3.mort <-mortality(p3.count) %>% mutate(Plate = "P3")
+p4.mort <-mortality(p4.count) %>% mutate(Plate = "P4")
+p5.mort <-mortality(p5.count) %>% mutate(Plate = "P5")
+
+p1.mort
+
+plate.all <- rbind(p1.mort, p2.mort, p3.mort, p4.mort, p5.mort)
+plate.all
+```
+
+
+
+```{r}
+p.all$Strain <- as.character(p.all$Strain)
+
+#Cylce1
+filtered <- p.all %>%
+  filter(Strain %in% c("168", "SPO"))
+
+cycle1_counts <- filtered %>%
+  group_by(Strain, Cycle1) %>%
+  summarise(Count = n(), .groups = "drop") %>%
+  pivot_wider(names_from = Cycle1, values_from = Count, values_fill = 0)
+colnames(cycle1_counts)[colnames(cycle1_counts) == "0"] <- "0"
+colnames(cycle1_counts)[colnames(cycle1_counts) == "1"] <- "1"
+
+cycle1_counts <- as.data.frame(cycle1_counts)
+cycle1_counts
+
+#Cylce2
+filtered <- p.all %>%
+  filter(Strain %in% c("168", "SPO"))
+
+cycle2_counts <- filtered %>%
+  group_by(Strain, Cycle2) %>%
+  summarise(Count = n(), .groups = "drop") %>%
+  pivot_wider(names_from = Cycle2, values_from = Count, values_fill = 0)
+colnames(cycle2_counts)[colnames(cycle2_counts) == "0"] <- "0"
+colnames(cycle2_counts)[colnames(cycle2_counts) == "1"] <- "1"
+
+cycle2_counts <- as.data.frame(cycle2_counts)
+cycle2_counts
+
+#Cylce3
+filtered <- p.all %>%
+  filter(Strain %in% c("168", "SPO"))
+
+cycle3_counts <- filtered %>%
+  group_by(Strain, Cycle3) %>%
+  summarise(Count = n(), .groups = "drop") %>%
+  pivot_wider(names_from = Cycle3, values_from = Count, values_fill = 0)
+colnames(cycle3_counts)[colnames(cycle3_counts) == "0"] <- "0"
+colnames(cycle3_counts)[colnames(cycle3_counts) == "1"] <- "1"
+
+cycle3_counts <- as.data.frame(cycle3_counts)
+cycle3_counts
+
+
+#rate of mortality
+cycle1_counts$Mortality <- cycle1_counts$`1` / 480
+cycle2_counts$Mortality <- cycle2_counts$`1` / 480
+cycle3_counts$Mortality <- cycle3_counts$`1` / 480
+cycle1_counts
+
+# Combine into a data frame
+mortality <- data.frame(
+  Strain = c("168", "SPOIIE"),  # or another column with strain names
+  Cycle1 = cycle1_counts$Mortality,
+  Cycle2 = cycle2_counts$Mortality,
+  Cycle3 = cycle3_counts$Mortality
+)
+mortality.all <- mortality
+print(mortality.all)
+
+mortality_long <- mortality %>%
+  pivot_longer(cols = starts_with("Cycle"), names_to = "Cycle", values_to = "mortality.all")
+mortality_long
+```
+
+
+```{r}
+ggplot(mortality_long, aes(x = Cycle, y = mortality.all, group = Strain, color = Strain)) +
+  geom_point(size = 3,) + geom_line(size = 1) +
+  labs(title = "Total Mortality Of Strains",
+       x = "Cycle",
+       y = "Proportion of Clear Wells") +
+  scale_color_manual(values=c("#999999", "#56B4E9"))
+  
+```
+
+```{r}
+ggplot(p5.mort, aes(x = Cycle, y = Mortality, group = Strain, color = Strain)) +
+  geom_point(size = 3,) + geom_line(size = 1) +
+  labs(title = "Mortality of Plate 5",
+       x = "Cycle",
+       y = "Proportion of Clear Wells") +
+  scale_color_manual(values=c("#999999", "#56B4E9"))
+```
+
+
+```{r}
+ggplot(plate.all, aes(x = Cycle, y = Mortality, group = Strain, color = Plate, shape = Strain)) +
+  geom_point(size = 3) + geom_line(size = 1) +
+  labs(title = "Mortality Over Cycles by Strain",
+       x = "Cycle",
+       y = "Mortality Rate") +
+  scale_color_brewer(palette = "Set1")
+```
+
+
+
+```{r}
+plate.all <- as.data.frame(plate.all)
+plate.aov <- aov(Mortality ~ Strain + Cycle + Plate, data = plate.all)
+summary(plate.aov)
+TukeyHSD(plate.aov)
+```
+
+
+```{r}
+p5_long <- p5 %>%
+  select(-ends_with("_factor")) %>%  
+  mutate(Row = str_extract(Well, "^[A-Z]"),
+         Column = as.integer(str_extract(Well, "[0-9]+"))) %>%
+  pivot_longer(cols = starts_with("Cycle"),
+               names_to = "Cycle",
+               values_to = "Value") %>%
+  mutate(Value_factor = factor(Value))  
+
+
+ggplot(p5_long, aes(x = Column, y = Row, fill = Value_factor)) +
+  geom_tile(color = "grey70") +
+  scale_fill_manual(values = c("0" = "white", "1" = "red")) +  
+  facet_wrap(~ Cycle, nrow = 1) +  
+  labs(title = "Changes in Mortality in Plate 5",
+       x = "Well",
+       y = "Row",
+       fill = "Mortality") +
+  scale_y_discrete(limits = rev(levels(factor(p5_long$Row)))) +
+  scale_x_continuous(breaks = 1:12, labels = 1:12) +
+  theme(axis.title = element_text(size = 14),       
+    axis.text = element_text(size = 9),        
+    strip.text = element_text(size = 14),       
+    legend.title = element_text(size = 12),     
+    legend.text = element_text(size = 10),      
+    plot.title = element_text(size = 16, hjust = 0.5))
+```
+

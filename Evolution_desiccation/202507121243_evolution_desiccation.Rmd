@@ -39,12 +39,18 @@ theme_set(theme_classic() +
 ```
 
 ```{r}
-setwd("C:/Users/ajl21/github/division.labor/")
-#data: Turbidity 0 alive 1 death; Strain 1 Delta 6 0 SPOIIE; 
-#Experiment 5- desiccation 24 hr; Experiment 6 - desiccation 48 hr; desiccation 7 - 4 hours 
+setwd("C:/Users/ajl21/github/division.labor/Evolution_desiccation/")
+#data: Turbidity 0 alive 1 death; A-D: 168 WT E-H: SPOIIE
+p1 <- read.csv("20250715_1530_evolution_desiccation_plate1.csv")
+p2 <- read.csv("20250715_1530_evolution_desiccation_plate2.csv")
+p3 <- read.csv("20250715_1530_evolution_desiccation_plate3.csv")
+p4 <- read.csv("20250715_1530_evolution_desiccation_plate4.csv")
+p5 <- read.csv("20250715_1530_evolution_desiccation_plate5.csv")
 
-data$Strain <- factor(data$Strain) 
-surv <-data
+p1
+
+
+
 ```
 
 ```{r}
