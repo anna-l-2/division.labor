@@ -3,8 +3,8 @@ title: "Dessication Evolution"
 author: "Anna L"
 date: "2025-06-12"
 output:
-  pdf_document: default
   html_document: default
+  pdf_document: default
 ---
 
 ```{r}
@@ -64,6 +64,23 @@ fit.data
 ```
 
 ```{r}
+# Assuming biofsurv.fit is a survfit object
+fit.data <- summary(biofsurv.fit)
+
+# Extract desired columns into a data frame
+table <- data.frame(
+  time   = fit.data$time,
+  survival = fit.data$surv,
+  std.err  = fit.data$std.err,
+  lower95  = fit.data$lower,
+  upper95  = fit.data$upper
+)
+
+table
+
+```
+
+```{r}
 par(mar = c(5, 7, 5, 7))
 plot(biofsurv.fit, conf.int = TRUE, mark.time = FALSE,
   xlim = c(0,32), ylim = c(0,1),
@@ -85,8 +102,8 @@ axis(side = 1, labels = T, lwd.ticks = 2, las = 1, cex.axis = 1.25,
        at = c(5, 10, 15, 20, 25, 30, 35))
 axis(side = 3, labels = F, lwd.ticks = 2, las = 1, cex.axis = 1.25, 
        at = c(0, 10, 20, 30, 40, 50))
-text(32, 0.97, "168", cex = 1)
-text(31, 0.3, "SPOIIE", cex = 1)
+text(30, 0.97, "168***", cex = 1)
+text(30, 0.3, "SPOIIE***", cex = 1)
 ```
 
 

@@ -1,0 +1,80 @@
+---
+title: "Model"
+author: "Anna L"
+date: "2025-08-19"
+output: html_document
+---
+
+```{r}
+#install.packages("deSolve")
+library(deSolve)
+library(ggplot2)
+
+# Define model function
+bacteria_growth <- function(t, state, parameters) {
+  with(as.list(c(state, parameters)), {
+    
+    # Resource uptake with Michaelis-Menten kinetics
+    uptake_B1 <- mu1 * (R / (K_m + R)) * (A / (K_A + A)) * B1
+    uptake_B2 <- mu2 * (R / (K_m + R)) * (B / (K_B + B)) * B2
+    
+    # Resource consumption
+    loss_B1 <- (1/Y) * uptake_B1  
+    loss_B2 <- (1/Y) * uptake_B2
+    
+    # Stochastic mortality for both populations
+    mortality_B1 <- rpois(1, max(0, m * B1 * rgamma(1, shape = alpha, scale = beta)))
+    mortality_B2 <- rpois(1, max(0, m * B2 * rgamma(1, shape = alpha, scale = beta)))
+    
+    # Population dynamics with stochastic mortality
+    dB1 <- max(0, B1 + uptake_B1 - mortality_B1) - B1
+    dB2 <- max(0, B2 + uptake_B2 - mortality_B2) - B2
+    
+    # Metabolite dynamics (B1 produces A, B2 consumes A; B2 produces B, B1 consumes B)
+    dA <- Y_A * B1 - gamma_A * A
+    dB <- Y_B * B2 - gamma_B * B
+    
+    # Resource depletion with a small floor to prevent zero values
+    dR <- max(1e-6, R - (loss_B1 + loss_B2)) - R
+    
+    list(c(dB1, dB2, dA, dB, dR))
+  })
+}
+
+# Parameters
+parameters <- c(mu1 = 0.3,   # Growth rate for B1
+                mu2 = 0.3,   # Growth rate for B2
+                K_m = 5,    # Half-saturation for common resource
+                K_A = 2,    # Half-saturation for metabolite A
+                K_B = 2,    # Half-saturation for metabolite B
+                Y = 0.5,    # Yield for common resource
+                Y_A = 0.5,  # Yield of metabolite A by B1
+                Y_B = 0.5,  # Yield of metabolite B by B2
+                gamma_A = 0.1,  # Decay rate of metabolite A
+                gamma_B = 0.1,  # Decay rate of metabolite B
+                m = 0.08,   # Baseline mortality rate
+                alpha = 1.2,  # Gamma shape for stochastic mortality
+                beta = 0.2)  # Gamma scale for stochastic mortality
+
+# Initial conditions
+state <- c(B1 = 1, B2 = 1, A = 0.1, B = 0.1, R = 50)  # Initial populations and resources
+
+# Time sequence
+times <- seq(0, 100, by = 1)  
+
+# Solve the ODE system using a stable solver
+set.seed(123)  
+out <- ode(y = state, times = times, func = bacteria_growth, parms = parameters, method = "rk4")
+
+# Convert to dataframe and plot
+out_df <- as.data.frame(out)
+
+ggplot(out_df, aes(x = time)) +
+  geom_line(aes(y = B1, color = "Bacteria 1")) +
+  geom_line(aes(y = B2, color = "Bacteria 2")) +
+  geom_line(aes(y = A, color = "Metabolite A"), linetype = "dashed") +
+  geom_line(aes(y = B, color = "Metabolite B"), linetype = "dashed") +
+  geom_line(aes(y = R, color = "Common Resource"), linetype = "dotted") +
+  labs(y = "Population / Metabolites / Resource", title = "Mutualistic Auxotrophy with Stochastic Mortality") +
+  scale_color_manual(values = c("blue", "red", "purple", "orange", "black"))
+```

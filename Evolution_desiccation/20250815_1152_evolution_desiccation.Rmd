@@ -1,0 +1,358 @@
+---
+title: "Dessication Evolution"
+author: "Anna L"
+date: "2025-06-12"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r}
+library(tidyr)
+library(ggplot2)
+library(stringr)
+library(dplyr)
+library(tidyverse)
+require(survival)
+library(purrr)
+require(extrafont)
+library(tidyr)
+library(ggpmisc)
+library(broom)
+
+#install.packages("broom")
+
+theme_set(theme_classic() +
+  theme(axis.title = element_text(size = 16),
+        axis.title.x = element_text(margin = margin(t = 15, b = 15)),
+        axis.title.y = element_text(margin = margin(l = 15, r = 15)),
+        axis.text = element_text(size = 13),
+        axis.text.x = element_text(margin = margin(t = 5)),
+        axis.text.y = element_text(margin = margin(r = 5)),
+        #axis.line.x = element_line(linewidth = 1),
+        #axis.line.y = element_line(linewidth = 1),
+        axis.line.x = element_blank(),
+        axis.line.y = element_blank(),
+        axis.ticks.x = element_line(linewidth = 1),
+        axis.ticks.y = element_line(linewidth = 1),
+        axis.ticks.length = unit(.1, "in"),
+        panel.border = element_rect(color = "grey20", fill = NA, linewidth = 1.5),
+        legend.text = element_text(size = 14),
+        strip.text = element_text(size = 14),
+        strip.background = element_blank()
+        ))
+```
+
+```{r}
+setwd("C:/Users/ajl21/github/division.labor/Evolution_desiccation/")
+#data: Turbidity 0 alive 1 death; A-D: 168 WT E-H: SPOIIE
+p1 <- read.csv("20250807_1336_evolution_desiccation_plate1.csv")
+p2 <- read.csv("20250807_1337_evolution_desiccation_plate2.csv")
+p3 <- read.csv("20250807_1338_evolution_desiccation_plate3.csv")
+p4 <- read.csv("20250807_1339_evolution_desiccation_plate4.csv")
+p5 <- read.csv("20250807_1339_evolution_desiccation_plate5.csv")
+
+strain.label <- function(df) {
+  df %>%
+    mutate(Strain = case_when(
+      substr(Well, 1, 1) %in% c("A", "B", "C", "D") ~ "168",
+      substr(Well, 1, 1) %in% c("E", "F", "G", "H") ~ "SPO",
+      TRUE ~ "Unknown"
+    ))
+}
+p1 <- strain.label(p1)
+p2 <- strain.label(p2)
+p3 <- strain.label(p3)
+p4 <- strain.label(p4)
+p5 <- strain.label(p5)
+p5
+p5 <- na.omit(p5)
+#All
+plates <- list(p1 = p1, p2 = p2, p3 = p3, p4 = p4, p5 = p5)
+p.all <- bind_rows(plates, .id = "Plate")
+
+
+p.all <- p.all %>%
+  mutate(Strain = case_when(
+    substr(Well, 1, 1) %in% c("A", "B", "C", "D") ~ "168",
+    substr(Well, 1, 1) %in% c("E", "F", "G", "H") ~ "SPO",
+    TRUE ~ "Unknown"
+  ))
+p.all
+
+```
+
+
+```{r}
+count_long <- function(df) {
+  df %>%
+    filter(Strain %in% c("168", "SPO")) %>%
+    pivot_longer(cols = starts_with("Cycle"),
+                 names_to = "Cycle",
+                 values_to = "Value") %>%
+    group_by(Strain, Cycle, Value) %>%
+    summarise(Count = n(), .groups = "drop") %>%
+    pivot_wider(names_from = Value, values_from = Count, values_fill = 0) }
+
+
+
+
+mortality <- function(df) {
+  df %>%
+    mutate(Mortality = `1` / 48)
+}
+
+cycle_counts <- function(df) {
+  df %>%
+    filter(Strain %in% c("168", "SPO")) %>%
+    select(Strain, Cycle.1, `0`, `1`, Mortality)
+}
+```
+
+
+```{r}
+p1.count <-count_long(p1)
+p2.count <-count_long(p2)
+p3.count <-count_long(p3)
+p4.count <-count_long(p4)
+p5.count <-count_long(p5)
+
+p1.count
+
+p1.mort <-mortality(p1.count) %>% mutate(Plate = "P1")
+p2.mort <-mortality(p2.count) %>% mutate(Plate = "P2")
+p3.mort <-mortality(p3.count) %>% mutate(Plate = "P3")
+p4.mort <-mortality(p4.count) %>% mutate(Plate = "P4")
+p5.mort <-mortality(p5.count) %>% mutate(Plate = "P5")
+
+p1.mort
+p5.mort
+
+p.all.mort <- rbind(p1.mort, p2.mort, p3.mort, p4.mort, p5.mort)
+
+p.all.mort #mortality by plate by cycle
+
+# By cycle morality - overarching view 
+
+mortality.all <- p.all.mort %>%
+  group_by(Strain, Cycle) %>%
+  summarise(
+    `0` = sum(`0`),
+    `1` = sum(`1`),
+    Mortality = sum(`1`) / sum(`0` + `1`),
+    .groups = "drop"
+  )
+
+mortality.all
+```
+
+
+
+
+
+```{r}
+ggplot(mortality.all, aes(x = Cycle, y = Mortality, group = Strain, color = Strain)) +
+  geom_point(size = 3,) + geom_smooth(method = "lm", se = TRUE, linetype = "solid", size = 1) +
+  labs(title = "Total Mortality Of Strains",
+       x = "Cycle",
+       y = "Mortality") +
+  scale_color_manual(values=c("#999999", "#56B4E9")) + scale_x_discrete(labels = c("Cycle 1", "Cycle 2","Cycle 3", "Cycle 4", "Cycle 5"))
+
+lm.mort.all <- lm(Mortality ~ Cycle, data = mortality.all)
+summary(lm.mort.all)
+
+fit <- lm(Mortality ~ Cycle, data =  mortality.all)
+fit
+summary(fit)
+
+anova(fit)
+
+```
+
+
+```{r}
+# Remove zeros to avoid log problems
+df_exp <- mortality.all %>%
+  mutate(Cycle_num = as.numeric(gsub("[^0-9]", "", Cycle))) %>%
+  filter(Mortality > 0)
+
+# Log-transform Mortality
+lm_exp <- lm(log(Mortality) ~ Cycle_num, data = df_exp)
+summary(lm_exp)
+
+# Back-transform predictions
+df_exp$pred_exp <- exp(predict(lm_exp))
+
+# Plot
+ggplot(df_exp, aes(x = Cycle_num, y = Mortality, color = Strain)) +
+  geom_point(size = 3) +
+  geom_line(aes(y = pred_exp), size = 1) +
+  labs(title = "Exponential Fit (via Log-Linear Model)",
+       x = "Cycle", y = "Mortality") +
+  scale_x_continuous(breaks = 1:5, labels = paste("Cycle", 1:5))
+
+
+
+```
+
+
+```{r}
+ggplot(p5.mort, aes(x = Cycle, y = Mortality, group = Strain, color = Strain)) +
+  geom_point(size = 3,) + geom_line(size = 1) +
+  labs(title = "Mortality of Plate 5",
+       x = "Cycle",
+       y = "Proportion of Clear Wells") + 
+  scale_x_discrete(labels = c("Cycle 1", "Cycle 2","Cycle 3", "Cycle 4", "Cycle 5")) + scale_color_manual(values=c("#999999", "#56B4E9"))
+```
+
+
+```{r}
+#Fig on your RA report
+ggplot(p.all.mort, aes(x = Cycle, y = Mortality, group = Strain, color = Strain)) + 
+  geom_point(size = 3) + geom_smooth(method = "lm", se = TRUE, linetype = "solid", size = 1) +
+  labs(title = "Mortality Over Cycles by Strain (R^2 =0.175)",
+       x = "Cycle",
+       y = "Mortality Rate") +
+  scale_x_discrete(labels = c("Cycle 1", "Cycle 2","Cycle 3", "Cycle 4", "Cycle 5")) +scale_color_manual(values=c("#000", "burlywood3"))
+lm.plate.all <- lm(Mortality ~ Cycle, data = p.all.mort)
+summary(lm.plate.all)
+
+
+
+anova(lm.plate.all)
+
+a <-aov()
+
+```
+
+
+
+
+```{r}
+#Exponential 
+# Prepare numeric cycle for fitting
+p.all.mort <- p.all.mort %>%
+  mutate(Cycle_num = as.numeric(gsub("[^0-9]", "", Cycle)))
+
+# Filter only the strain to fit (e.g., burlywood3) and positive mortality
+fit_strain <- p.all.mort %>% filter(Strain != "168" & Mortality > 0)  # replace "168" with black strain name
+
+# Fit log-linear (exponential) model
+lm_exp <- lm(log(Mortality) ~ Cycle_num, data = fit_strain)
+
+# Back-transform predictions
+fit_strain$pred_exp <- exp(predict(lm_exp))
+
+# Extract R² for title
+r2_exp <- summary(lm_exp)$r.squared
+
+# Plot matching your style
+ggplot(p.all.mort, aes(x = Cycle, y = Mortality, group = Strain, color = Strain)) +
+  geom_point(size = 3) +
+  # Exponential line only for the non-black strain
+  geom_line(data = fit_strain, aes(x = Cycle, y = pred_exp, group = Strain, color = Strain), size = 1) +
+  labs(title = paste0("Mortality Over Cycles by Strain (Exponential Fit, R^2 = ", round(r2_exp,3), ")"),
+       x = "Cycle",
+       y = "Mortality Rate") +
+  scale_x_discrete(labels = c("Cycle 1", "Cycle 2","Cycle 3", "Cycle 4", "Cycle 5")) +
+  scale_color_manual(values=c("#000000", "burlywood3"))
+
+
+
+
+```
+
+```{r}
+
+# Convert Cycle to numeric
+p.all.mort <- p.all.mort %>%
+  mutate(Cycle_num = as.numeric(gsub("Cycle\\.?","", Cycle)))
+
+# Fit linear model
+lm.plate.all <- lm(Mortality ~ Cycle_num, data = p.all.mort)
+summary(lm.plate.all)
+
+# Extract R²
+r2 <- summary(lm.plate.all)$r.squared
+
+# Plot with regression line and R²
+ggplot(p.all.mort, aes(x = Cycle_num, y = Mortality, group = Strain, color = Strain)) + 
+  geom_point(size = 3) +
+  geom_smooth(method = "lm", se = TRUE, linetype = "solid", size = 1) +
+  labs(title = "Mortality Over Cycles by Strain",
+       x = "Cycle",
+       y = "Mortality Rate") +
+  scale_x_continuous(breaks = 1:5, labels = c("Cycle 1", "Cycle 2","Cycle 3", "Cycle 4", "Cycle 5")) +
+  scale_color_manual(values = c("#000", "burlywood3")) +
+  annotate("text", x = 4, y = max(p.all.mort$Mortality), 
+           label = paste0("R² = ", round(r2, 3)), color = "black", hjust = 0)
+
+```
+
+
+```{r}
+plate.aov <- aov(Mortality ~ Strain*Cycle, data = p.all.mort)
+summary(plate.aov)
+TukeyHSD(plate.aov)
+```
+
+```{r}
+plate_list <- list(
+  P1 = p1,
+  P2 = p2,
+  P3 = p3,
+  P4 = p4,
+  P5 = p5
+)
+
+plates_long <- bind_rows(lapply(names(plate_list), function(plate_name) {
+  plate_list[[plate_name]] %>%
+    select(-ends_with("_factor")) %>%
+    mutate(Row = str_extract(Well, "^[A-Z]"),
+           Column = as.integer(str_extract(Well, "[0-9]+")),
+           Plate = plate_name) %>%
+    pivot_longer(cols = starts_with("Cycle"),
+                 names_to = "Cycle",
+                 values_to = "Value") %>%
+    mutate(Value_factor = factor(Value))
+}), .id = NULL)
+
+cycle_labels <- c(
+  "Cycle.1" = "Cycle 1",
+  "Cycle.2" = "Cycle 2",
+  "Cycle.3" = "Cycle 3",
+  "Cycle.4" = "Cycle 4",
+  "Cycle.5" = "Cycle 5"
+)
+
+ggplot(plates_long, aes(x = Column, y = Row, fill = Value_factor)) +
+  geom_tile(color = "grey70") +
+  facet_grid(Plate ~ Cycle, labeller = labeller(Cycle = cycle_labels)) +  
+  labs(
+    title = "Changes in Mortality Across Plates",
+    x = "Well",
+    y = "Row",
+    fill = "Mortality"
+  ) +
+  scale_y_discrete(limits = rev(levels(factor(plates_long$Row)))) +
+  scale_x_continuous(breaks = 1:12, labels = 1:12) +
+  theme(
+    axis.title = element_text(size = 14),
+    axis.text = element_text(size = 9),
+    strip.text = element_text(size = 14),
+    legend.title = element_text(size = 12),
+    legend.text = element_text(size = 10),
+    plot.title = element_text(size = 16, hjust = 0.5)
+  ) + scale_fill_manual(
+    values = c("0" = "white", "1" = "red"),
+    labels = c("0" = "Alive", "1" = "Dead")  
+  ) 
+
+```
+
+```{r}
+p.all.mort
+ggplot(p.all.mort, aes (x = Cycle, y = Mortality)) +
+  geom_boxplot() +scale_x_discrete(labels = c("Cycle 1", "Cycle 2","Cycle 3", "Cycle 4", "Cycle 5"))
+```
+
