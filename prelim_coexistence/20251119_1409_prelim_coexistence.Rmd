@@ -1,0 +1,137 @@
+---
+title: "Dessication D6 and SPO"
+author: "Anna L"
+date: "2025-05-29"
+output: html_document
+---
+
+```{r}
+library(tidyr)
+library(ggplot2)
+library(stringr)
+library(dplyr)
+library(tidyverse)
+library(RColorBrewer)
+
+theme_set(theme_classic() +
+  theme(axis.title = element_text(size = 16),
+        axis.title.x = element_text(margin = margin(t = 15, b = 15)),
+        axis.title.y = element_text(margin = margin(l = 15, r = 15)),
+        axis.text = element_text(size = 13),
+        axis.text.x = element_text(margin = margin(t = 5)),
+        axis.text.y = element_text(margin = margin(r = 5)),
+        #axis.line.x = element_line(linewidth = 1),
+        #axis.line.y = element_line(linewidth = 1),
+        axis.line.x = element_blank(),
+        axis.line.y = element_blank(),
+        axis.ticks.x = element_line(linewidth = 1),
+        axis.ticks.y = element_line(linewidth = 1),
+        axis.ticks.length = unit(.1, "in"),
+        panel.border = element_rect(color = "grey20", fill = NA, linewidth = 1.5),
+        legend.text = element_text(size = 14),
+        strip.text = element_text(size = 14),
+        strip.background = element_blank()
+        ))
+```
+
+```{r}
+setwd("C:/Users/ajl21/github/division.labor/prelim_coexistence/")
+OD <- read.csv("20251119_1133_DoLprelim_ODreads.csv")
+abx <- read.csv("20251119_1133_DoLprelim_antibiotic_test.csv")
+growth <- read.csv("20251119_1133_DoLprelim_growth_check.csv")
+
+
+#Erm 
+names(OD)[names (OD) == "Alanine.E..Phenylalanine.K."] <-"A(E) + P(K)"
+names(OD)[names (OD) == "Alanine.E..Serine.K."] <-"A(E) + S(K)"
+names(OD)[names (OD) == "Alanine.E..Tyrosine.K."] <-"A(E) + T(K)"
+names(OD)[names (OD) == "Phenylalanine.E..Serine.K."] <-"P(E) + S(K)"
+names(OD)[names (OD) == "Phenylalanine.E..Tyrosine.K."] <-"P(E) + T(K)"
+names(OD)[names (OD) == "Tyrosine.E..Serine.K."] <-"T(E) + S(K)"
+
+#Kan
+names(OD)[names (OD) == "Alanine.K..Phenylalanine.E."] <-"A(K) + P(E)"
+names(OD)[names (OD) == "Alanine.K..Serine.E."] <-"A(K) + S(E)"
+names(OD)[names (OD) == "Alanine.K..Tyrosine.E."] <-"A(K) + T(E)"
+names(OD)[names (OD) == "Phenylalanine.K..Tyrosine.E."] <-"P(K) + T(E)"
+names(OD)[names (OD) == "Phenylalanine.K..Serine.E."] <-"P(K) + S(E)"
+names(OD)[names (OD) == "Tyrosine.K..Serine.E."] <-"T(K) + S(E)"
+
+OD
+ 
+OD_long <- OD |>
+  pivot_longer(
+    cols = -Time,
+    names_to = "Culture",
+    values_to = "OD"
+  )
+OD_long
+OD
+
+culture_names <- colnames(OD[2:13])  
+culture_names
+```
+
+```{r}
+ggplot(data = OD_long, aes(x = Time, y= OD, color = Culture)) + 
+  geom_line(linewidth=1) +geom_point(size =2) +
+  xlab("Hours") +ylab("OD") +
+  scale_x_continuous(breaks = c(24, 48, 72, 96),
+                     labels = c("24", "48", "72", "96")) + 
+  scale_color_brewer(palette="Paired") 
+
+```
+
+```{r}
+aovOD <-aov(OD ~ Culture+Time, data =OD_long)
+summary(aovOD)
+TukeyHSD(aovOD)
+```
+
+```{r}
+ldg <- c("Growth", "No Growth")
+
+abx$X0  <- as.numeric(abx$X0)
+abx$X24 <- as.numeric(abx$X24)
+abx$X48 <- as.numeric(abx$X48)
+abx$X72 <- as.numeric(abx$X72)
+abx$X96 <- as.numeric(abx$X96)
+
+
+abx.m <- as.matrix(abx[, c("X0","X24","X48","X72","X96")])
+
+
+
+rownames(abx.m) <- culture_names
+colnames(abx.m) <- c("0","24","48","72","96")
+
+color <- colorRampPalette(brewer.pal(8, "Spectral"))(2)
+
+heatmap(abx.m, Colv = NA, Rowv = NA, scale = "none", col = color,
+        xlab = "Hours", main = "Antibiotic Screening")
+legend("left", legend = c("No Growth", "Growth"), fill = color, border = FALSE)
+
+```
+
+```{r}
+growth
+
+growth$X0  <- as.numeric(growth$X0)
+growth$X24 <- as.numeric(growth$X24)
+growth$X48 <- as.numeric(growth$X48)
+growth$X72 <- as.numeric(growth$X72)
+growth$X96 <- as.numeric(growth$X96)
+
+growth.m <- as.matrix(growth[, c("X0","X24","X48","X72","X96")])
+
+
+
+rownames(growth.m) <- culture_names
+colnames(growth.m) <- c("0","24","48","72","96")
+
+color <- colorRampPalette(brewer.pal(8, "Spectral"))(2)
+
+heatmap(growth.m, Colv = NA, Rowv = NA, scale = "none", col = color,
+        xlab = "Hours", main = "Growth Screening")
+
+```
