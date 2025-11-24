@@ -1,0 +1,13 @@
+﻿Combination,0,24,48,72,96
+Alanine(E)+Phenylalanine(K),1,1,0,0,0
+Alanine(E)+Serine(K),1,1,0,0,0
+Alanine(E)+Tyrosine(K),1,1,0,0,0
+Phenylalanine(E)+Serine(K),1,0,0,0,0
+Phenylalanine(E)+Tyrosine(K),1,0,0,0,0
+Tyrosine(E)+Serine(K),1,0,0,0,0
+Alanine(K)+Phenylalanine(E),1,1,1,1,1
+Alanine(K)+Serine(E),1,1,1,0,0
+Alanine(K)+Tyrosine(E),1,1,1,0,0
+Phenylalanine(K)+Tyrosine(E),1,0,0,0,0
+Phenylalanine(K)+Serine(E),1,0,0,0,0
+Tyrosine(K)+Serine(E),1,0,0,0,0
