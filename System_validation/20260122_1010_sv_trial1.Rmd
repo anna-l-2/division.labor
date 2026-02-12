@@ -1,0 +1,400 @@
+---
+title: "Dessication D6 and SPO"
+author: "Anna L"
+date: "2026-21-1"
+output: html_document
+---
+
+```{r}
+library(tidyr)
+library(ggplot2)
+library(stringr)
+library(dplyr)
+library(tidyverse)
+
+theme_set(theme_classic() +
+  theme(axis.title = element_text(size = 16),
+        axis.title.x = element_text(margin = margin(t = 15, b = 15)),
+        axis.title.y = element_text(margin = margin(l = 15, r = 15)),
+        axis.text = element_text(size = 13),
+        axis.text.x = element_text(margin = margin(t = 5)),
+        axis.text.y = element_text(margin = margin(r = 5)),
+        #axis.line.x = element_line(linewidth = 1),
+        #axis.line.y = element_line(linewidth = 1),
+        axis.line.x = element_blank(),
+        axis.line.y = element_blank(),
+        axis.ticks.x = element_line(linewidth = 1),
+        axis.ticks.y = element_line(linewidth = 1),
+        axis.ticks.length = unit(.1, "in"),
+        panel.border = element_rect(color = "grey20", fill = NA, linewidth = 1.5),
+        legend.text = element_text(size = 14),
+        strip.text = element_text(size = 14),
+        strip.background = element_blank()
+        ))
+```
+
+```{r}
+setwd("C:/Users/ajl21/github/division.labor/System_validation/")
+
+blank <-read.csv("20260116_system_validation_blank.csv")
+
+wt_SM <- read.csv("20260128_15441_WT_SM.csv")
+wt_SMT <- read.csv("20260128_15441_WT_SMT.csv")
+
+co<-read.csv("20260120_1430_sv_coexist.csv")
+
+alaE <- read.csv("20260120_1430_sv_alaE.csv")
+pheE <- read.csv("20260120_1430_sv_pheE.csv")
+serE <- read.csv("20260120_1430_sv_serE.csv")
+tyrE <- read.csv("20260120_1430_sv_tyrE.csv")
+
+alaK <- read.csv("20260120_1430_sv_alaK.csv")
+pheK <- read.csv("20260120_1430_sv_pheK.csv")
+serK <- read.csv("20260120_1430_sv_serK.csv")
+tyrK <- read.csv("20260120_1430_sv_tyrK.csv")
+
+#f.convert <- function(df) {
+#  df[-1] <- lapply(df[-1], function(x) as.numeric(as.character(x)))
+#  df}
+
+alaE
+```
+
+```{r}
+SAT <- mean(blank$X1)
+SA<- mean(blank$X2)
+SPT <- mean(blank$X3)
+SP <- mean(blank$X4)
+SST <- mean(blank$X5)
+SS <- mean(blank$X6)
+STT <- mean(blank$X7)
+ST <- mean(blank$X8)
+SMT <- mean(blank$X9)
+SM <- mean(blank$X10)
+
+SAT
+
+```
+
+```{r}
+#subtracting blank values 
+
+alaE.R<-rbind(
+  alaE[1:2,2:13] - SAT,
+  alaE[3:4, 2:13] - SA,
+  alaE[5:6, 2:13] - SMT,
+  alaE[7:8, 2:13] - SM
+)
+
+alaE <- data.frame(media = rep(c("SAT", "SA", "SMT", "SM"), each = 2), alaE.R)
+
+
+alaK.R <- rbind(
+  alaK[1:2,2:13] - SAT,
+  alaK[3:4, 2:13] - SA,
+  alaK[5:6, 2:13] - SMT,
+  alaK[7:8, 2:13] - SM
+)
+alaK <- data.frame(media = rep(c("SAT", "SA", "SMT", "SM"), each =2), alaK.R)
+
+#row.names = alaK$X
+
+pheE.R <- rbind(
+  pheE[1:2,2:13] - SPT,
+  pheE[3:4, 2:13] - SP,
+  pheE[5:6, 2:13] - SMT,
+  pheE[7:8, 2:13] - SM
+)
+pheE <- data.frame(media = rep(c("SPT", "SP", "SMT", "SM"), each =2), pheE.R, row.names = pheE$X)
+
+
+pheK.R <- rbind(
+  pheK[1:2,2:13] - SPT,
+  pheK[3:4, 2:13] - SP,
+  pheK[5:6, 2:13] - SMT,
+  pheK[7:8, 2:13] - SM
+)
+pheK <- data.frame(media = rep(c("SPT", "SP", "SMT", "SM"), each =2), pheK.R, row.names = pheK$X)
+
+serE.R <- rbind(
+  serE[1:2,2:13] - SST,
+  serE[3:4, 2:13] - SS,
+  serE[5:6, 2:13] - SMT,
+  serE[7:8, 2:13] - SM
+)
+serE <- data.frame(media = rep(c("SST", "SS", "SMT", "SM"), each =2), serE.R, row.names = serE$X)
+
+serK.R <- rbind(
+  serK[1:2,2:13] - SST,
+  serK[3:4, 2:13] - SS,
+  serK[5:6, 2:13] - SMT,
+  serK[7:8, 2:13] - SM
+)
+serK <- data.frame(media = rep(c("SST", "SS", "SMT", "SM"), each =2), serK.R, row.names = serK$X)
+
+
+tyrE.R <- rbind(
+  tyrE[1:2,2:13] - STT,
+  tyrE[3:4, 2:13] - ST,
+  tyrE[5:6, 2:13] - SMT,
+  tyrE[7:8, 2:13] - SM
+)
+tyrE <- data.frame(media = rep(c("STT", "ST", "SMT", "SM"), each =2), tyrE.R, row.names = tyrE$X)
+
+tyrK.R <- rbind(
+  tyrK[1:2,2:13] - STT,
+  tyrK[3:4, 2:13] - ST,
+  tyrK[5:6, 2:13] - SMT,
+  tyrK[7:8, 2:13] - SM
+)
+tyrK <- data.frame(media = rep(c("STT", "ST", "SMT", "SM"), each =2),tyrK.R, row.names = tyrK$X)
+
+wt.R <-rbind(wt[1:4,2:13]-SMT,
+           wt[5:8,2:13]-SM)
+wt <-data.frame(media = rep(c("SMT", "SM"), each =4),wt.R, row.names = wt$X)
+
+
+```
+
+
+```{r}
+alaE$ABX <- "E"
+alaK$ABX <-"K"
+
+alaE
+
+ala <- rbind(alaE, alaK)
+ala
+
+ala.l <- ala %>%
+  pivot_longer(
+    cols = X1:X12,
+    names_to = "Sample",
+    values_to = "OD"
+  )
+ala.l
+
+ggplot(ala.l, aes(x = media, y = OD, fill = ABX)) +
+  geom_col(position = position_dodge(width = .9)) +
+  labs(
+    x = "Media Type",
+    y = "OD600",
+    fill = "Antibiotic"
+  ) + scale_fill_manual(labels = c("Erm", "Kan"), values = c("cadetblue4", "darkolivegreen") )
+#+  stat_summary(fun.data = mean_se, geom = "errorbar", position = position_dodge(width = 0.8), width = 0.2)
+
+```
+
+
+```{r}
+pheE$ABX <- "E"
+pheK$ABX <-"K"
+
+pheE
+
+phe <- rbind(pheE, pheK)
+phe
+
+phe.l <- phe %>%
+  pivot_longer(
+    cols = X1:X12,
+    names_to = "Sample",
+    values_to = "OD"
+  )
+phe.l
+
+ggplot(phe.l, aes(x = media, y = OD, fill = ABX)) +
+  geom_col(position = position_dodge(width = .9)) +
+  labs(
+    x = "Media Type",
+    y = "OD600",
+    fill = "Antibiotic"
+  ) + scale_fill_manual(labels = c("Erm", "Kan"), values = c("cadetblue4", "darkolivegreen") )
+#+stat_summary(fun.data = mean_se, geom = "errorbar", position = position_dodge(width = 0.8), width = 0.2)
+
+```
+
+```{r}
+serE$ABX <- "E"
+serK$ABX <-"K"
+
+serE
+
+ser <- rbind(serE, serK)
+ser
+
+ser.l <- ser %>%
+  pivot_longer(
+    cols = X1:X12,
+    names_to = "Sample",
+    values_to = "OD"
+  )
+ser.l
+
+ggplot(ser.l, aes(x = media, y = OD, fill = ABX)) +
+  geom_col(position = position_dodge(width = .9)) +
+  labs(
+    x = "Media Type",
+    y = "OD600",
+    fill = "Antibiotic"
+  ) + scale_fill_manual(labels = c("Erm", "Kan"), values = c("cadetblue4", "darkolivegreen") )
+```
+
+
+```{r}
+tyrE$ABX <- "E"
+tyrK$ABX <-"K"
+
+tyrE
+
+tyr <- rbind(tyrE, tyrK)
+tyr
+
+tyr.l <- tyr %>%
+  pivot_longer(
+    cols = X1:X12,
+    names_to = "Sample",
+    values_to = "OD"
+  )
+tyr.l
+
+ggplot(tyr.l, aes(x = media, y = OD, fill = ABX)) +
+  geom_col(position = position_dodge(width = .9)) +
+  labs(
+    x = "Media Type",
+    y = "OD600",
+    fill = "Antibiotic"
+  ) + scale_fill_manual(labels = c("Erm", "Kan"), values = c("cadetblue4", "darkolivegreen") )
+
+
+```
+
+
+```{r}
+ala.aov <- aov(OD ~ media + ABX,
+  data = ala.l
+)
+
+summary(ala.aov)
+
+ala.PH <-TukeyHSD(ala.aov)
+ala.PH
+
+
+phe.aov <- aov(OD ~ media + ABX,
+  data = phe.l
+)
+
+summary(phe.aov)
+
+phe.PH <-TukeyHSD(phe.aov)
+phe.PH
+
+ser.aov <- aov(OD ~ media + ABX,
+  data = ser.l
+)
+
+summary(ser.aov)
+
+ser.PH <-TukeyHSD(ser.aov)
+ser.PH
+
+
+tyr.aov <- aov(OD ~ media * ABX,
+  data = tyr.l
+)
+
+summary(tyr.aov)
+
+tyr.PH <-TukeyHSD(tyr.aov)
+tyr.PH
+```
+
+
+```{r}
+
+correction_wt <- function(df, blank_col, media) {
+  blank <- mean(df[[blank_col]])
+  
+  out <- data.frame(df[1:8, 2:12] - blank)
+  out$Media <- media
+ 
+  
+  out
+}
+
+wt_SM_R <- correction_wt(
+  df        = wt_SM,
+  blank_col = "X12",
+  media     = "SM"
+)
+
+wt_SMT_R <- correction_wt(
+  df        = wt_SMT,
+  blank_col = "X12",
+  media     = "SMT"
+)
+
+
+
+
+wt <- rbind(wt_SM_R,wt_SMT_R)
+wt
+
+wt.l <- wt %>%
+  pivot_longer(
+    cols = X1:X11,
+    names_to = "Sample",
+    values_to = "OD"
+  )
+wt.l
+
+ggplot(wt.l, aes(x = Media, y = OD, fill = Media)) +
+  geom_col(position = position_dodge(width = .9)) +
+  labs(
+    x = "Media Type",
+    y = "OD600"
+  ) + scale_fill_manual(labels = c("+trp", "-trp"), values = c("cadetblue4", "darkolivegreen") )
+
+t.test(OD ~ Media, data = wt.l)        
+
+```
+
+```{r}
+co
+co.r <- co[1:8, 2:13]-SMT
+co.r
+
+col <- c("A(E)+P", "A(E)+S", "A(E)+T", "P(E)+S", "P(E)+T", "T(E)+S","A+P(E)", "A+S(E)", "A+T(E)", "P+S(E)", "P+T(E)", "T+S(E)")
+
+colnames(co.r) <- col
+co.r
+
+co.l <- co.r %>% 
+  pivot_longer(
+    cols = everything(), 
+    names_to = "Culture",
+    values_to = "OD"
+)
+co.l
+
+ggplot(co.l, aes(x = Culture, y = OD)) +
+  geom_col(position = position_dodge(width = .9)) +
+  labs(
+    x = "Culture",
+    y = "OD600"
+  ) + theme(axis.text.x = element_text(angle = 90))
+
+co.aov <- aov(OD ~ Culture,
+  data = co.l
+)
+
+summary(co.aov)
+
+co.PH <-TukeyHSD(co.aov)
+co.PH
+
+```
+
+
+

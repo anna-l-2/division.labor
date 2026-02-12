@@ -1,0 +1,369 @@
+---
+title: "System validation"
+author: "Anna L"
+date: "2026-21-1"
+output: html_document
+---
+
+```{r}
+library(tidyr)
+library(ggplot2)
+library(stringr)
+library(dplyr)
+library(tidyverse)
+
+theme_set(theme_classic() +
+  theme(axis.title = element_text(size = 16),
+        axis.title.x = element_text(margin = margin(t = 15, b = 15)),
+        axis.title.y = element_text(margin = margin(l = 15, r = 15)),
+        axis.text = element_text(size = 13),
+        axis.text.x = element_text(margin = margin(t = 5)),
+        axis.text.y = element_text(margin = margin(r = 5)),
+        #axis.line.x = element_line(linewidth = 1),
+        #axis.line.y = element_line(linewidth = 1),
+        axis.line.x = element_blank(),
+        axis.line.y = element_blank(),
+        axis.ticks.x = element_line(linewidth = 1),
+        axis.ticks.y = element_line(linewidth = 1),
+        axis.ticks.length = unit(.1, "in"),
+        panel.border = element_rect(color = "grey20", fill = NA, linewidth = 1.5),
+        legend.text = element_text(size = 14),
+        strip.text = element_text(size = 14),
+        strip.background = element_blank()
+        ))
+```
+
+```{r}
+setwd("C:/Users/ajl21/github/division.labor/System_validation/")
+
+
+alaE_SM <- read.csv("20260128_15441_AlaE_SM.csv")
+alaE_SMA <- read.csv("20260128_15441_AlaE_SMA.csv")
+alaE_SMAT <- read.csv("20260128_15441_AlaE_SMAT.csv")
+alaE_SMT <- read.csv("20260128_15441_AlaE_SMT.csv")
+
+alaK_SM <- read.csv("20260128_15441_AlaK_SM.csv")
+alaK_SMA <- read.csv("20260128_15441_AlaK_SMA.csv")
+alaK_SMAT <- read.csv("20260128_15441_AlaK_SMAT.csv")
+alaK_SMT <- read.csv("20260128_15441_AlaK_SMT.csv")
+
+pheE_SM <- read.csv("20260128_15441_PheE_SM.csv")
+pheE_SMA <- read.csv("20260128_15441_PheE_SMA.csv")
+pheE_SMAT <- read.csv("20260128_15441_PheE_SMAT.csv")
+pheE_SMT <- read.csv("20260128_15441_PheE_SMT.csv")
+
+pheK_SM <- read.csv("20260128_15441_PheK_SM.csv")
+pheK_SMA <- read.csv("20260128_15441_PheK_SMA.csv")
+pheK_SMAT <- read.csv("20260128_15441_PheK_SMAT.csv")
+pheK_SMT <- read.csv("20260128_15441_PheK_SMT.csv")
+
+tyrE_SM <- read.csv("20260130_1035_TyrE_SM.csv")
+tyrE_SMA <- read.csv("20260130_1035_TyrE_SMA.csv")
+tyrE_SMAT <- read.csv("20260130_1035_TyrE_SMAT.csv")
+tyrE_SMT <- read.csv("20260130_1035_TyrE_SMT.csv")
+
+tyrK_SM <- read.csv("20260130_1035_TyrK_SM.csv")
+tyrK_SMA <- read.csv("20260130_1035_TyrK_SMA.csv")
+tyrK_SMAT <- read.csv("20260130_1035_TyrK_SMAT.csv")
+tyrK_SMT <- read.csv("20260130_1035_TyrK_SMT.csv")
+
+```
+
+```{r}
+#ALA
+
+blank <-mean(alaE_SM$X12)
+alaE_SM_R <- data.frame(alaE_SM[1:8, 2:12] - blank )
+alaE_SM_R$Media <- c("SM")
+alaE_SM_R$ABX <- c("E")
+
+blank <-mean(alaE_SMA$X1)
+alaE_SMA_R <- data.frame(alaE_SMA[1:8, 2:12] -blank )
+alaE_SMA_R$Media <- c("SMA")
+alaE_SMA_R$ABX <- c("E")
+
+
+#blank <-mean(alaE_SMAT$X12) #CHECK BLANK
+alaE_SMAT_R <- data.frame(alaE_SMAT[1:8, 2:12] -  0.037875 )
+alaE_SMAT_R$Media <- c("SMAT")
+alaE_SMAT_R$ABX <- c("E")
+
+
+blank <-mean(alaE_SMT$X1)
+alaE_SMT_R <- data.frame(alaE_SMT[1:8, 2:12] -blank )
+alaE_SMT_R$Media <- c("SMT")
+alaE_SMT_R$ABX <- c("E")
+
+###############################################################
+
+blank <-mean(alaK_SM$X1)
+alaK_SM_R <- data.frame(alaK_SM[1:8, 2:12] - blank )
+alaK_SM_R$Media <- c("SM")
+alaK_SM_R$ABX <- c("K")
+
+
+blank <-mean(alaK_SMA$X1)
+alaK_SMA_R <- data.frame(alaK_SMA[1:8, 2:12] -blank )
+alaK_SMA_R$Media <- c("SMA")
+alaK_SMA_R$ABX <- c("K")
+
+
+blank <-mean(alaK_SMAT$X1)
+alaK_SMAT_R <- data.frame(alaK_SMAT[1:8, 2:12] - blank )
+alaK_SMAT_R$Media <- c("SMAT")
+alaK_SMAT_R$ABX <- c("K")
+
+blank
+
+
+blank <-mean(alaK_SMT$X12)
+alaK_SMT_R <- data.frame(alaK_SMT[1:8, 2:12] -blank )
+alaK_SMT_R$Media <- c("SMT")
+alaK_SMT_R$ABX <- c("K")
+alaK_SMT_R
+blank
+
+
+ala <- rbind(
+  alaE_SM_R,
+  alaE_SMA_R,
+  alaE_SMAT_R,
+  alaE_SMT_R,
+  alaK_SM_R,
+  alaK_SMA_R,
+  alaK_SMAT_R,
+  alaK_SMT_R
+)
+
+ala
+
+SMAT <- rbind(alaE_SMAT_R, alaK_SMAT_R)
+SMAT
+
+ala.l <- ala %>%
+  pivot_longer(
+    cols = X1:X11,
+    names_to = "Sample",
+    values_to = "OD"
+  )
+ala.l
+
+ggplot(ala.l, aes(x = Media, y = OD, fill = ABX)) +
+  geom_col(position = position_dodge(width = .9)) +
+  labs(
+    x = "Media Type",
+    y = "OD600",
+    fill = "Antibiotic"
+  ) + scale_fill_manual(labels = c("Erm", "Kan"), values = c("cadetblue4", "darkolivegreen") )
+#+  stat_summary(fun.data = mean_se, geom = "errorbar", position = position_dodge(width = 0.8), width = 0.2)
+
+ala.aov <- aov(OD ~ Media * ABX, data = ala.l)
+summary(ala.aov)
+TukeyHSD(ala.aov)
+```
+
+
+```{r}
+#PHE
+
+correction <- function(df, blank_col, media, abx) {
+  blank <- mean(df[[blank_col]])
+  
+  out <- data.frame(df[1:8, 2:12] - blank)
+  out$Media <- media
+  out$ABX <- abx
+  
+  out
+}
+
+pheE_SM_R <- correction(
+  df        = pheE_SM,
+  blank_col = "X12",
+  media     = "SM",
+  abx       = "E"
+)
+pheE_SM_R
+pheE_SM_R[1, 10] <- NA
+pheE_SM_R
+
+pheE_SMA_R <- correction(
+  df        = pheE_SMA,
+  blank_col = "X12",
+  media     = "SMA",
+  abx       = "E"
+)
+
+pheE_SMAT_R <- correction(
+  df        = pheE_SMAT,
+  blank_col = "X12",
+  media     = "SMAT",
+  abx       = "E"
+)
+
+pheE_SMT_R <- correction(
+  df        = pheE_SMT,
+  blank_col = "X12",
+  media     = "SMT",
+  abx       = "E"
+)
+
+pheK_SM_R <- correction(
+  df        = pheK_SM,
+  blank_col = "X12",
+  media     = "SM",
+  abx       = "K"
+)
+
+pheK_SMA_R <- correction(
+  df        = pheK_SMA,
+  blank_col = "X12",
+  media     = "SMA",
+  abx       = "K"
+)
+
+pheK_SMAT_R <- correction(
+  df        = pheK_SMAT,
+  blank_col = "X12",
+  media     = "SMAT",
+  abx       = "K"
+)
+
+pheK_SMT_R <- correction(
+  df        = pheK_SMT,
+  blank_col = "X12",
+  media     = "SMT",
+  abx       = "K"
+)
+```
+
+
+
+
+```{r}
+phe <- rbind(
+  pheE_SM_R,
+  pheE_SMA_R,
+  pheE_SMAT_R,
+  pheE_SMT_R,
+  pheK_SM_R,
+  pheK_SMA_R,
+  pheK_SMAT_R,
+  pheK_SMT_R
+)
+
+phe
+
+phe.l <- phe %>%
+  pivot_longer(
+    cols = X1:X11,
+    names_to = "Sample",
+    values_to = "OD"
+  )
+phe.l
+
+ggplot(phe.l, aes(x = Media, y = OD, fill = ABX)) +
+  geom_col(position = position_dodge(width = .9)) +
+  labs(
+    x = "Media Type",
+    y = "OD600",
+    fill = "Antibiotic"
+  ) + scale_fill_manual(labels = c("Erm", "Kan"), values = c("cadetblue4", "darkolivegreen") )
+#+  stat_summary(fun.data = mean_se, geom = "errorbar", position = position_dodge(width = 0.8), width = 0.2)
+
+phe.aov <- aov(OD ~ Media * ABX, data = phe.l)
+summary(phe.aov)
+TukeyHSD(phe.aov)
+```
+
+
+```{r}
+tyrE_SM_R <- correction(
+  df = tyrE_SM,
+  blank_col = "X12",
+  media = "SM",
+  abx = "E"
+)
+
+tyrE_SMA_R <- correction(
+  df = tyrE_SMA,
+  blank_col = "X12",
+  media = "SMA",
+  abx = "E"
+)
+
+tyrE_SMAT_R <- correction(
+  df = tyrE_SMAT,
+  blank_col = "X12",
+  media = "SMAT",
+  abx = "E"
+)
+
+tyrE_SMT_R <- correction(
+  df = tyrE_SMT,
+  blank_col = "X12",
+  media = "SMT",
+  abx = "E"
+)
+
+
+tyrK_SM_R <- correction(
+  df = tyrK_SM,
+  blank_col = "X12",
+  media = "SM",
+  abx = "K"
+)
+
+tyrK_SMA_R <- correction(
+  df = tyrK_SMA,
+  blank_col = "X12",
+  media = "SMA",
+  abx = "K"
+)
+
+tyrK_SMAT_R <- correction(
+  df = tyrK_SMAT,
+  blank_col = "X12",
+  media = "SMAT",
+  abx = "K"
+)
+
+tyrK_SMT_R <- correction(
+  df = tyrK_SMT,
+  blank_col = "X12",
+  media = "SMT",
+  abx = "K"
+)
+tyr <- rbind(
+tyrE_SM_R,
+tyrE_SMA_R, 
+tyrE_SMAT_R,
+tyrE_SMT_R, 
+tyrK_SM_R,
+tyrK_SMA_R, 
+tyrK_SMAT_R, 
+tyrK_SMT_R) 
+
+tyr
+
+tyr.l <- tyr %>%
+  pivot_longer(
+    cols = X1:X11,
+    names_to = "Sample",
+    values_to = "OD"
+  )
+tyr.l
+
+ggplot(tyr.l, aes(x = Media, y = OD, fill = ABX)) +
+  geom_col(position = position_dodge(width = .9)) +
+  labs(
+    x = "Media Type",
+    y = "OD600",
+    fill = "Antibiotic"
+  ) + scale_fill_manual(labels = c("Erm", "Kan"), values = c("cadetblue4", "darkolivegreen") )
+#+  stat_summary(fun.data = mean_se, geom = "errorbar", position = position_dodge(width = 0.8), width = 0.2)
+
+tyr.aov <- aov(OD ~ Media * ABX, data = tyr.l)
+summary(tyr.aov)
+TukeyHSD(tyr.aov)
+
+```
