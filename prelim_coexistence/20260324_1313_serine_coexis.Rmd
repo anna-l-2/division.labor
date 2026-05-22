@@ -1,0 +1,121 @@
+---
+title: "System validation"
+author: "Anna L"
+date: "2026-24-3"
+output: html_document
+---
+
+```{r}
+library(tidyr)
+library(ggplot2)
+library(stringr)
+library(dplyr)
+library(tidyverse)
+
+theme_set(theme_classic() +
+  theme(axis.title = element_text(size = 16),
+        axis.title.x = element_text(margin = margin(t = 15, b = 15)),
+        axis.title.y = element_text(margin = margin(l = 15, r = 15)),
+        axis.text = element_text(size = 13),
+        axis.text.x = element_text(margin = margin(t = 5)),
+        axis.text.y = element_text(margin = margin(r = 5)),
+        #axis.line.x = element_line(linewidth = 1),
+        #axis.line.y = element_line(linewidth = 1),
+        axis.line.x = element_blank(),
+        axis.line.y = element_blank(),
+        axis.ticks.x = element_line(linewidth = 1),
+        axis.ticks.y = element_line(linewidth = 1),
+        axis.ticks.length = unit(.1, "in"),
+        panel.border = element_rect(color = "grey20", fill = NA, linewidth = 1.5),
+        legend.text = element_text(size = 14),
+        strip.text = element_text(size = 14),
+        strip.background = element_blank()
+        ))
+```
+
+```{r}
+setwd("C:/Users/ajl21/github/division.labor/prelim_coexistence/")
+
+
+serEpheK <- read.csv("20260327_2124_serEpheK.csv")
+serEtyrK <- read.csv("20260327_2124_serEtyrK.csv")
+
+serKpheE <- read.csv("20260327_2124_serKpheE.csv")
+serKtyrE <- read.csv("20260327_2124_serKtyrE.csv")
+
+
+
+```
+
+```{r}
+co_names <-c( "Day 1",	"Day 3",	"Day 5",	"Day 7",	"Day 8",	"Day 11",	"Day 12",	"Day 13")
+colnames(serEpheK ) <- co_names
+colnames(serEtyrK ) <- co_names
+colnames(serKpheE ) <- co_names
+colnames(serKtyrE) <- co_names
+
+```
+
+
+
+
+```{r}
+#combined
+long <- function(df, sample_each = 8, n_samples = 4) {
+  df_long <- pivot_longer(df,
+                          cols = everything(),
+                          names_to = "Time",
+                          values_to = "OD600")
+  
+  df_long$Sample <- rep(1:n_samples, each = sample_each)
+  
+  df_long$Time <- factor(df_long$Time,
+                         levels = c("Day 1", "Day 3", "Day 5", "Day 7",
+                                    "Day 8", "Day 11", "Day 12", "Day 13"))
+  
+  return(df_long)
+}
+
+serEpheK.l <-long(serEpheK)
+serEtyrK.l <-long(serEtyrK)
+serKpheE.l <-long(serKpheE)
+serKtyrE.l <-long(serKtyrE)
+
+serEpheK.l$Type <-c("serEpheK")
+serEtyrK.l$Type <-c("serEtyrK")
+serKpheE.l$Type <-c("serKpheE")
+serKtyrE.l$Type <-c("serKtyrE")
+
+coexist <- rbind(serEpheK.l, serEtyrK.l, serKpheE.l,serKtyrE.l)
+coexist
+
+
+ggplot(coexist, aes(x=Time, y=OD600, group = Type, color = Type)) +geom_point()+ geom_smooth()+labs(color = "Type", x = "Time (Day)")+ theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) + scale_y_continuous(breaks = seq(0, 6, by = .5)) #+geom_boxplot(aes(group = Time), width = 0.1, fill = NA, color = "black", outlier.shape = NA)
+aov.coexist <-aov(OD600~Sample+Time+Type, data = coexist)
+summary(aov.coexist)
+```
+
+
+
+
+```{r}
+#comparison between erm/kan cassettes 
+pheKtyrE.l$Type <- c("pheKtyrE")
+pheEtyrK.l$Type <-c("pheEtyrK")
+
+coexist <- rbind(pheKtyrE.l, pheEtyrK.l)
+coexist
+
+coexist.c <- coexist[-94,]
+
+ggplot(coexist.c, aes(x=Time, y=OD600, group = Type, color = Type)) +geom_point()+ geom_smooth()+labs(color = "Type", x = "Time (Day)")+ theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) + scale_y_continuous(breaks = seq(0, 6, by = .5)) #+geom_boxplot(aes(group = Time), width = 0.1, fill = NA, color = "black", outlier.shape = NA)
+
+
+aov.coexist <-aov(OD600~Sample+Time+Type, data = coexist)
+summary(aov.coexist)
+
+lm.coexist.c <- lm(OD600~Time, data =coexist.c)
+summary(lm.coexist.c)
+plot(lm.coexist.c)
+
+```

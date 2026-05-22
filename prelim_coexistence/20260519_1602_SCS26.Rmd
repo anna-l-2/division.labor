@@ -1,0 +1,184 @@
+---
+title: "System validation"
+author: "Anna L"
+date: "2026-19-05"
+output: html_document
+---
+
+```{r}
+library(tidyr)
+library(ggplot2)
+library(stringr)
+library(dplyr)
+library(tidyverse)
+
+theme_set(theme_classic() +
+  theme(axis.title = element_text(size = 16),
+        axis.title.x = element_text(margin = margin(t = 15, b = 15)),
+        axis.title.y = element_text(margin = margin(l = 15, r = 15)),
+        axis.text = element_text(size = 13),
+        axis.text.x = element_text(margin = margin(t = 5)),
+        axis.text.y = element_text(margin = margin(r = 5)),
+        #axis.line.x = element_line(linewidth = 1),
+        #axis.line.y = element_line(linewidth = 1),
+        axis.line.x = element_blank(),
+        axis.line.y = element_blank(),
+        axis.ticks.x = element_line(linewidth = 1),
+        axis.ticks.y = element_line(linewidth = 1),
+        axis.ticks.length = unit(.1, "in"),
+        panel.border = element_rect(color = "grey20", fill = NA, linewidth = 1.5),
+        legend.text = element_text(size = 14),
+        strip.text = element_text(size = 14),
+        strip.background = element_blank()
+        ))
+```
+
+```{r}
+setwd("C:/Users/ajl21/github/division.labor/prelim_coexistence/")
+
+
+serEpheK <- read.csv("20260327_2124_serEpheK.csv")
+serEtyrK <- read.csv("20260327_2124_serEtyrK.csv")
+
+serKpheE <- read.csv("20260327_2124_serKpheE.csv")
+serKtyrE <- read.csv("20260327_2124_serKtyrE.csv")
+
+
+pheKtyrE <- read.csv("20260324_1352_pheKtyrE.csv")
+pheEtyrK <- read.csv("20260324_1352_pheEtyrK.csv")
+
+```
+
+```{r}
+co_names_s <-c( "Day 1",	"Day 3",	"Day 5",	"Day 7",	"Day 8",	"Day 11",	"Day 12",	"Day 13")
+colnames(serEpheK ) <- co_names_s
+colnames(serEtyrK ) <- co_names_s
+colnames(serKpheE ) <- co_names_s
+colnames(serKtyrE) <- co_names_s
+
+co_names <-c( "Day 1",	"Day 3",	"Day 5",	"Day 7", "Day 8",	"Day 10",	"Day 11",	"Day 12",	"Day 13","Day 14",	"Day 15", "Day 16","Day 17", "Day 18")
+colnames(pheEtyrK ) <- co_names
+colnames(pheKtyrE) <- co_names
+
+```
+
+```{r}
+pheEtyrK.l <- pivot_longer(pheEtyrK,
+                          cols= starts_with("Day"),
+                          names_to = "Time",
+                          values_to = "OD600")
+pheEtyrK.l$Sample <-rep(1:4, each=14)
+pheEtyrK.l$Time <-factor(pheEtyrK.l$Time,
+                         levels = c("Day 1",	"Day 3",	"Day 5",	"Day 7", "Day 8",	"Day 10",	"Day 11",	"Day 12",	"Day 13","Day 14",	"Day 15", "Day 16","Day 17", "Day 18"))
+
+pheKtyrE.l <- pivot_longer(pheKtyrE,
+                          cols= everything(),
+                          names_to = "Time",
+                          values_to = "OD600")
+pheKtyrE.l$Sample <-rep(1:4, each=14)
+pheKtyrE.l$Time <-factor(pheKtyrE.l$Time,
+                         levels = c("Day 1",	"Day 3",	"Day 5",	"Day 7", "Day 8",	"Day 10",	"Day 11",	"Day 12",	"Day 13","Day 14",	"Day 15", "Day 16","Day 17", "Day 18"))
+
+
+coexist.phetyr <- rbind(pheKtyrE.l, pheEtyrK.l)
+coexist.phetyr$Type<-c("PheTyr")
+
+
+coexist.phetyr.c <- coexist.phetyr[-76,]
+
+
+```
+
+
+```{r}
+#combined
+long <- function(df, sample_each = 8, n_samples = 4) {
+  df_long <- pivot_longer(df,
+                          cols = everything(),
+                          names_to = "Time",
+                          values_to = "OD600")
+  
+  df_long$Sample <- rep(1:n_samples, each = sample_each)
+  
+  df_long$Time <- factor(df_long$Time,
+                         levels = c("Day 1", "Day 3", "Day 5", "Day 7",
+                                    "Day 8", "Day 11", "Day 12", "Day 13"))
+  
+  return(df_long)
+}
+
+serEpheK.l <-long(serEpheK)
+serEtyrK.l <-long(serEtyrK)
+serKpheE.l <-long(serKpheE)
+serKtyrE.l <-long(serKtyrE)
+
+
+serEpheK.l$Type <-c("SerPhe")
+serEtyrK.l$Type <-c("SerTyr")
+serKpheE.l$Type <-c("SerPhe")
+serKtyrE.l$Type <-c("SerTyr")
+
+coexist.ser <- rbind(serEpheK.l, serEtyrK.l, serKpheE.l,serKtyrE.l)
+coexist.ser
+
+
+```
+
+
+
+
+```{r}
+#combine both data sets 
+
+phetyr.short <- subset(
+  coexist.phetyr.c,
+  !(Time %in% c("Day 10","Day 14", "Day 15", "Day 16", "Day 17", "Day 18"))
+)
+
+combined  <- rbind(coexist.ser, phetyr.short)
+
+ggplot(coexist.ser, aes(x=Time, y=OD600, group=Sample, color= Sample)) +geom_point()+ geom_smooth(se=FALSE)+labs(color = "Type")+ theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) + scale_y_continuous(breaks = seq(0, 6, by = .5))
+
+ggplot(combined, aes(x=Time, y=OD600, group = Type, color = Type)) +geom_point()+ geom_smooth(se=FALSE)+labs(color = "Type")+ theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) + scale_y_continuous(breaks = seq(0, 6, by = .5))+scale_color_manual(values=c("firebrick3", "burlywood3", "black"))
+
+combined.aov<-aov(OD600~Type*Time, combined)
+summary(combined.aov)
+TukeyHSD(combined.aov)
+
+
+#ggplot(combined, aes(x=Type, y=OD600, color = Type)) +geom_boxplot() + scale_y_continuous(breaks = seq(0, 6, by = .5))+scale_color_manual(values=c("#69b3a2", "gray57", "black"))+ scale_x_discrete(labels = c("Phenylalanine-Tyrosine", "Serine-Phenylalanine", "Serine-Tyrosine"))+
+  #theme(legend.position = "none")
+
+wide <- combined %>%
+  pivot_wider(
+    id_cols = c(Sample, Type),
+    names_from = Time,
+    values_from = OD600,
+    values_fn = mean
+  )
+
+day13<-as.data.frame(combined %>%
+  filter(Time == "Day 13") %>%
+  group_by(Type) %>%
+  summarize(
+    mean_OD600 = mean(OD600, na.rm = TRUE),
+    .groups = "drop"
+  ))
+
+a<-aov(mean_OD600~Type, day13)
+summary(a)
+
+day13.c <- combined %>%
+  filter(Time == "Day 13")
+
+ggplot(day13.c, aes(x=Type, y=OD600, color = Type)) +geom_boxplot() + scale_y_continuous(breaks = seq(0, 6, by = .5))+scale_color_manual(values=c("firebrick3", "burlywood3", "black"))+ scale_x_discrete(labels = c("Phenylalanine-Tyrosine", "Serine-Phenylalanine", "Serine-Tyrosine"))+
+  theme(legend.position = "none")
+
+aov13 <- aov(OD600 ~ Type, data = day13.c)
+
+summary(aov13)
+TukeyHSD(aov13)
+
+
+
+```
