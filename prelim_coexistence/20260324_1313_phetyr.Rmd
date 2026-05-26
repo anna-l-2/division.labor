@@ -1,0 +1,272 @@
+---
+title: "System validation"
+author: "Anna L"
+date: "2026-24-3"
+output: html_document
+---
+
+```{r}
+library(tidyr)
+library(ggplot2)
+library(stringr)
+library(dplyr)
+library(tidyverse)
+library(outliers)
+
+theme_set(theme_classic() +
+  theme(axis.title = element_text(size = 16),
+        axis.title.x = element_text(margin = margin(t = 15, b = 15)),
+        axis.title.y = element_text(margin = margin(l = 15, r = 15)),
+        axis.text = element_text(size = 13),
+        axis.text.x = element_text(margin = margin(t = 5)),
+        axis.text.y = element_text(margin = margin(r = 5)),
+        #axis.line.x = element_line(linewidth = 1),
+        #axis.line.y = element_line(linewidth = 1),
+        axis.line.x = element_blank(),
+        axis.line.y = element_blank(),
+        axis.ticks.x = element_line(linewidth = 1),
+        axis.ticks.y = element_line(linewidth = 1),
+        axis.ticks.length = unit(.1, "in"),
+        panel.border = element_rect(color = "grey20", fill = NA, linewidth = 1.5),
+        legend.text = element_text(size = 14),
+        strip.text = element_text(size = 14),
+        strip.background = element_blank()
+        ))
+```
+
+```{r}
+setwd("C:/Users/ajl21/github/division.labor/prelim_coexistence/")
+
+
+pheE168 <- read.csv("20260324_1352_pheE168.csv")
+pheK168 <- read.csv("20260324_1352_pheK168.csv")
+
+tyrE168 <- read.csv("20260324_1352_tyrE168.csv")
+tyrK168 <- read.csv("20260324_1352_tyrK168.csv")
+
+pheKtyrE <- read.csv("20260324_1352_pheKtyrE.csv")
+pheEtyrK <- read.csv("20260324_1352_pheEtyrK.csv")
+
+
+
+```
+
+```{r}
+columnnames <-c("24hr", "72hr", "120hr","168hr")
+colnames(pheE168) <- columnnames
+colnames(pheK168) <- columnnames
+colnames(tyrE168) <- columnnames
+colnames(tyrK168) <- columnnames
+
+
+co_names <-c( "Day 1",	"Day 3",	"Day 5",	"Day 7", "Day 8",	"Day 10",	"Day 11",	"Day 12",	"Day 13","Day 14",	"Day 15", "Day 16","Day 17", "Day 18")
+colnames(pheEtyrK ) <- co_names
+colnames(pheKtyrE) <- co_names
+
+```
+
+
+```{r}
+#pheE168
+pheE168.l <- pivot_longer(pheE168,
+                          cols= everything(),
+                          names_to = "Time",
+                          values_to = "OD600")
+pheE168.l$Sample <-rep(1:4, each=4)
+pheE168.l$Time <-factor(pheE168.l$Time,
+                         levels = c("24hr", "72hr", "120hr", "168hr"))
+
+
+ggplot(pheE168.l, aes(x=Time, y=OD600, group = Sample, color = factor(Sample))) +
+  geom_line() +geom_point() +labs(color = "Sample")
+
+aov.pheE168 <-aov(OD600~Sample+Time, data = pheE168.l)
+summary(aov.pheE168)
+
+
+```
+
+```{r}
+#pheK168
+pheK168.l <- pivot_longer(pheK168,
+                          cols= everything(),
+                          names_to = "Time",
+                          values_to = "OD600")
+pheK168.l$Sample <-rep(1:4, each=4)
+pheK168.l$Time <-factor(pheK168.l$Time,
+                         levels = c("24hr", "72hr", "120hr", "168hr"))
+
+
+ggplot(pheK168.l, aes(x=Time, y=OD600, group = Sample, color = factor(Sample))) +
+  geom_line() +geom_point()+labs(color = "Sample")
+aov.pheK168 <-aov(OD600~Sample+Time, data = pheK168.l)
+summary(aov.pheK168)
+
+
+ggplot(pheK168.l, aes(x = Time, y = OD600)) +
+  geom_boxplot(aes(group = Time), width = 0.1, fill = NA, color = "black", outlier.shape = NA) +
+  geom_line(aes(group = Sample, color = factor(Sample))) +
+  geom_point(aes(color = factor(Sample))) +
+  labs(color = "Sample")
+```
+
+
+```{r}
+#tyrE168
+tyrE168.l <- pivot_longer(tyrE168,
+                          cols= everything(),
+                          names_to = "Time",
+                          values_to = "OD600")
+tyrE168.l$Sample <-rep(1:4, each=4)
+tyrE168.l$Time <-factor(tyrE168.l$Time,
+                         levels = c("24hr", "72hr", "120hr", "168hr"))
+
+
+ggplot(tyrE168.l, aes(x=Time, y=OD600, group = Sample, color = factor(Sample))) +
+  geom_line() +geom_point()+labs(color = "Sample")
+aov.tyrE168 <-aov(OD600~Sample+Time, data = tyrE168.l)
+summary(aov.tyrE168)
+
+```
+
+```{r}
+#tyrK168
+tyrK168.l <- pivot_longer(tyrK168,
+                          cols= everything(),
+                          names_to = "Time",
+                          values_to = "OD600")
+tyrK168.l$Sample <-rep(1:4, each=4)
+tyrK168.l$Time <-factor(tyrK168.l$Time,
+                         levels = c("24hr", "72hr", "120hr", "168hr"))
+
+
+ggplot(tyrK168.l, aes(x=Time, y=OD600, group = Sample, color = factor(Sample))) +
+  geom_line() +geom_point()+labs(color = "Sample")
+aov.tyrK168 <-aov(OD600~Sample+Time, data = tyrK168.l)
+summary(aov.tyrK168)
+
+```
+
+
+```{r}
+#pheEtyrK
+pheEtyrK.l <- pivot_longer(pheEtyrK,
+                          cols= starts_with("Day"),
+                          names_to = "Time",
+                          values_to = "OD600")
+pheEtyrK.l$Sample <-rep(1:4, each=14)
+pheEtyrK.l$Time <-factor(pheEtyrK.l$Time,
+                         levels = c("Day 1",	"Day 3",	"Day 5",	"Day 7", "Day 8",	"Day 10",	"Day 11",	"Day 12",	"Day 13","Day 14",	"Day 15", "Day 16","Day 17", "Day 18"))
+
+ggplot(pheEtyrK.l, aes(x = "", y = OD600)) +
+  geom_boxplot(fill = "lightskyblue3", color = "black", outlier.color = "red") +
+  labs(
+    title = "Distribution of OD600",
+    y = "OD600",
+    x = NULL)
+grubbs.test(pheEtyrK.l$OD600, type = 10, opposite = FALSE, two.sided = FALSE)
+
+pheEtyrK.l<-pheEtyrK.l[-38,]
+pheEtyrK.l$Sample<-as.factor(pheEtyrK.l$Sample)
+
+
+ggplot(pheEtyrK.l, aes(x=Time, y=OD600, group = Sample, color = factor(Sample))) +
+  geom_line() +geom_point()+labs(color = "Sample", title ="Phenylalanine(erm)+Tyrosine(kan)", x = "Time (day)", y = "OD600")+ theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) + scale_y_continuous(breaks = seq(0, 3, by = 1))+ylim(0,3)#+geom_boxplot(aes(group = Time), width = 0.1, fill = NA, color = "black", outlier.shape = NA)
+aov.pheEtyrK <-aov(OD600~Sample+Time, data = pheEtyrK.l)
+summary(aov.pheEtyrK)
+TukeyHSD(aov.pheEtyrK)
+
+aov.pheEtyrK.s <-aov(OD600~Sample, data = pheEtyrK.l)
+summary(aov.pheEtyrK.s)
+TukeyHSD(aov.pheEtyrK.s)
+
+```
+
+```{r}
+#pheKtyrE
+pheKtyrE.l <- pivot_longer(pheKtyrE,
+                          cols= everything(),
+                          names_to = "Time",
+                          values_to = "OD600")
+pheKtyrE.l$Sample <-rep(1:4, each=14)
+pheKtyrE.l$Time <-factor(pheKtyrE.l$Time,
+                         levels = c("Day 1",	"Day 3",	"Day 5",	"Day 7", "Day 8",	"Day 10",	"Day 11",	"Day 12",	"Day 13","Day 14",	"Day 15", "Day 16","Day 17", "Day 18"))
+
+
+ggplot(pheKtyrE.l, aes(x=Time, y=OD600, group = Sample, color = factor(Sample))) +
+  geom_line() +geom_point()+labs(color = "Sample", title ="Phenylalanine(kan)+Tyrosine(erm)", x = "Time (day)", y = "OD600") + theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) + scale_y_continuous(breaks = seq(0, 6, by = .5))#+geom_boxplot(aes(group = Time), width = 0.1, fill = NA, color = "black", outlier.shape = NA)
+
+pheKtyrE.l$Sample<-as.factor(pheEtyrK.l$Sample)
+
+aov.pheKtyrE <-aov(OD600~Sample+Time, data = pheKtyrE.l)
+summary(aov.pheKtyrE)
+TukeyHSD(aov.pheKtyrE)
+
+```
+
+
+```{r}
+#comparison between erm/kan cassettes 
+pheKtyrE.l$Type <- c("pheKtyrE")
+pheEtyrK.l$Type <-c("pheEtyrK")
+
+coexist <- rbind(pheKtyrE.l, pheEtyrK.l)
+coexist
+
+coexist$Day_num <- as.numeric(gsub("Day ", "", coexist$Time))
+
+
+coexist.c <- coexist[-76,]
+
+ggplot(coexist.c, aes(x=Time, y=OD600, group = Type, color = Type)) +geom_point()+ geom_smooth()+labs(color = "Type")+ theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) + scale_y_continuous(breaks = seq(0, 6, by = .5)) #+geom_boxplot(aes(group = Time), width = 0.1, fill = NA, color = "black", outlier.shape = NA)
+
+aov.coexist <-aov(OD600~Type*Sample, data = coexist.c)
+summary(aov.coexist)
+
+coexist.c
+
+lm.coexist.c <- lm(OD600~Day_num, data =coexist.c)
+summary(lm.coexist.c)
+coef(lm.coexist.c)
+plot(lm.coexist.c)
+
+coexist$Time<-as.numeric(coexist$Time)
+coexist
+
+ggplot(coexist.c, aes(x = Day_num, y = OD600)) +
+  geom_point() +
+  geom_smooth(method = "glm") +
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) +
+  scale_y_continuous(breaks = seq(0, 6, by = 0.5)) +
+  scale_x_continuous(breaks = seq(0, 18, by = 1)) +
+  coord_cartesian(xlim = c(0, 18)) +
+  xlab("Time (Day)")
+
+round(confint(lm.coexist.c, level= .95), digits = 3)
+
+
+B <- 1000
+fitted_vals <- fitted(lm.coexist.c)
+residuals_vals <- resid(lm.coexist.c)
+
+boot_coefs <- matrix(NA, nrow = B, ncol = length(coef(lm.coexist.c)))
+for (b in 1:B) {
+  resampled_resid <- sample(residuals_vals, replace = TRUE)
+  y_star <- fitted_vals + resampled_resid
+  
+  boot_model <- lm(y_star ~ Time, data = coexist.c)
+  boot_coefs[b, ] <- coef(boot_model)
+}
+
+colnames(boot_coefs) <- names(coef(lm.coexist.c))
+round(apply(boot_coefs, 2, quantile, probs = c(0.025, 0.975)), digits=3)
+
+coexist.c$OD600.l<-log(coexist.c$OD600)
+coexist.c$day.num.l<-log(coexist.c$Day_num)
+
+ggplot(coexist.c, aes(x=Day_num, y=OD600.l)) +geom_point()+geom_smooth(method="lm")+ theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) +scale_x_continuous(breaks = seq(0, 18, by = 1))+xlab("Time (Day)")+ylab("log(OD600)") #+geom_boxplot(aes(group = Time), width = 0.1, fill = NA, color = "black", outlier.shape = NA)
+
+coexist.lm.log<-lm(OD600.l~Day_num, data =coexist.c)
+summary(coexist.lm.log)
+plot(coexist.lm.log)
+```

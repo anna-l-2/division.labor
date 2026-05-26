@@ -1,0 +1,59 @@
+---
+title: "Dessication D6 and SPO"
+author: "Anna L"
+date: "2025-12-11"
+output: html_document
+---
+
+```{r}
+library(tidyr)
+library(ggplot2)
+library(stringr)
+library(dplyr)
+library(tidyverse)
+library(RColorBrewer)
+
+theme_set(theme_classic() +
+  theme(axis.title = element_text(size = 16),
+        axis.title.x = element_text(margin = margin(t = 15, b = 15)),
+        axis.title.y = element_text(margin = margin(l = 15, r = 15)),
+        axis.text = element_text(size = 13),
+        axis.text.x = element_text(margin = margin(t = 5)),
+        axis.text.y = element_text(margin = margin(r = 5)),
+        #axis.line.x = element_line(linewidth = 1),
+        #axis.line.y = element_line(linewidth = 1),
+        axis.line.x = element_blank(),
+        axis.line.y = element_blank(),
+        axis.ticks.x = element_line(linewidth = 1),
+        axis.ticks.y = element_line(linewidth = 1),
+        axis.ticks.length = unit(.1, "in"),
+        panel.border = element_rect(color = "grey20", fill = NA, linewidth = 1.5),
+        legend.text = element_text(size = 14),
+        strip.text = element_text(size = 14),
+        strip.background = element_blank()
+        ))
+```
+
+```{r}
+setwd("C:/Users/ajl21/github/division.labor/CFU_OD/Pilot/")
+data <- read.csv("20251211_0930_ODCFU.csv")
+data
+
+data$Dilution <- as.factor(data$Dilution)
+
+
+
+
+
+```
+
+```{r}
+ggplot(data = data, aes(x = OD, y= CFU, color = Dilution)) + 
+  geom_point(size = 2) + geom_line() 
+  
+```
+
+```{r}
+model <- lm (CFU ~ OD, data = data)
+summary(model)
+```

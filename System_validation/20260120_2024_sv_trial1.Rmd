@@ -1,0 +1,65 @@
+---
+title: "Dessication D6 and SPO"
+author: "Anna L"
+date: "2025-05-29"
+output: html_document
+---
+
+```{r}
+library(tidyr)
+library(ggplot2)
+library(stringr)
+library(dplyr)
+library(tidyverse)
+
+theme_set(theme_classic() +
+  theme(axis.title = element_text(size = 16),
+        axis.title.x = element_text(margin = margin(t = 15, b = 15)),
+        axis.title.y = element_text(margin = margin(l = 15, r = 15)),
+        axis.text = element_text(size = 13),
+        axis.text.x = element_text(margin = margin(t = 5)),
+        axis.text.y = element_text(margin = margin(r = 5)),
+        #axis.line.x = element_line(linewidth = 1),
+        #axis.line.y = element_line(linewidth = 1),
+        axis.line.x = element_blank(),
+        axis.line.y = element_blank(),
+        axis.ticks.x = element_line(linewidth = 1),
+        axis.ticks.y = element_line(linewidth = 1),
+        axis.ticks.length = unit(.1, "in"),
+        panel.border = element_rect(color = "grey20", fill = NA, linewidth = 1.5),
+        legend.text = element_text(size = 14),
+        strip.text = element_text(size = 14),
+        strip.background = element_blank()
+        ))
+```
+
+```{r}
+setwd("C:/Users/ajl21/github/division.labor/System_validation/")
+
+blank <-read.csv("20260116_system_validation_blank.csv")
+
+wt <- read.csv("20260120_1430_sv_wt.csv")
+coexit<-read.csv("20260120_1430_sv_coexist.csv")
+
+alaE <- read.csv("20260120_1430_sv_alaE.csv")
+pheE <- read.csv("20260120_1430_sv_pheE.csv")
+serE <- read.csv("20260120_1430_sv_serE.csv")
+tyrE <- read.csv("20260120_1430_sv_tyrE.csv")
+
+alaK <- read.csv("20260120_1430_sv_alaK.csv")
+pheK <- read.csv("20260120_1430_sv_pheK.csv")
+serK <- read.csv("20260120_1430_sv_serK.csv")
+tyrK <- read.csv("20260120_1430_sv_tyrK.csv")
+
+#f.convert <- function(df) {
+#  df[-1] <- lapply(df[-1], function(x) as.numeric(as.character(x)))
+#  df}
+
+```
+
+```{r}
+
+
+```
+
+

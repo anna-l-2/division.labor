@@ -1,0 +1,193 @@
+---
+title: "System validation"
+author: "Anna L"
+date: "2026-21-1"
+output: html_document
+---
+
+```{r}
+library(tidyr)
+library(ggplot2)
+library(stringr)
+library(dplyr)
+library(tidyverse)
+
+theme_set(theme_classic() +
+  theme(axis.title = element_text(size = 16),
+        axis.title.x = element_text(margin = margin(t = 15, b = 15)),
+        axis.title.y = element_text(margin = margin(l = 15, r = 15)),
+        axis.text = element_text(size = 13),
+        axis.text.x = element_text(margin = margin(t = 5)),
+        axis.text.y = element_text(margin = margin(r = 5)),
+        #axis.line.x = element_line(linewidth = 1),
+        #axis.line.y = element_line(linewidth = 1),
+        axis.line.x = element_blank(),
+        axis.line.y = element_blank(),
+        axis.ticks.x = element_line(linewidth = 1),
+        axis.ticks.y = element_line(linewidth = 1),
+        axis.ticks.length = unit(.1, "in"),
+        panel.border = element_rect(color = "grey20", fill = NA, linewidth = 1.5),
+        legend.text = element_text(size = 14),
+        strip.text = element_text(size = 14),
+        strip.background = element_blank()
+        ))
+```
+
+```{r}
+setwd("C:/Users/ajl21/github/division.labor/System_validation/")
+
+
+d96 <- read.csv("20260306_serinemut.csv")
+d6 <- read.csv("20260312_1541_serinemut.csv")
+
+d150.0 <- read.csv("20260314_1300_serinemut.csv")
+
+d125 <-read.csv("20260315_1300_serinemut.csv")
+
+wt <- read.csv("20260206_growthcurveLBSM.csv")
+
+
+```
+
+```{r}
+d96 
+blank <- d96[c(4,8), 2:9]
+blank <- data.frame(lapply(blank, as.numeric))
+blank
+blank <- colMeans(blank)
+blank
+d96.c <- d96[-c(4,8,9),-c(1,10:14)]
+d96.c
+
+d96.sum <- as.matrix(d96.c) - blank
+
+
+
+names<-c("150mM", "125mM", "120mM", "110mM", "100mM", "90mM","80mM","70mM")
+
+colnames(d96.sum) <- names
+d96.sum
+
+
+boxplot(d96.sum,
+        xlab = "Concentration",
+        ylab = "OD600",
+        las =2,
+        cex.axis = 0.7)
+
+d96.sum <- as.data.frame(d96.sum)
+
+d96.w <- d96.sum %>%
+  pivot_longer(
+    cols = everything(),
+    names_to = "Treatment",
+    values_to = "OD600"
+  )
+
+d96.w
+
+aov96<- aov(OD600 ~Treatment, data =d96.w)
+summary(aov96)
+TukeyHSD(aov96)
+
+
+
+```
+
+
+```{r}
+d6
+names<-c("120mM",	"125mM", "150mM",	"300mM",	"1mM")
+
+
+colnames(d6) <- names
+d6
+
+colSums(d6)
+
+d6.w <- d6 %>%
+  pivot_longer(
+    cols = everything(),
+    names_to = "Treatment",
+    values_to = "OD600"
+  )
+d6.w
+
+boxplot(d6 ,
+        xlab = "Concentration",
+        ylab = "OD600"
+       )
+
+d6.wc <-na.omit(d6.w)
+d6.wc
+
+aov6<- aov(OD600 ~Treatment, data =d6.w)
+summary(aov6)
+TukeyHSD(aov6)
+
+```
+
+
+```{r}
+d150.0
+
+boxplot(d150.0 ,
+        xlab = "Concentration",
+        ylab = "OD600"
+       )
+
+box
+```
+
+
+```{r}
+
+
+well96 <-as.data.frame(d96.sum$`125mM`)
+
+well6.3.10 <-as.data.frame(d6$X125mM)
+
+well6.3.14 <-as.data.frame(d150.0$X125uM)
+
+flasks <-as.data.frame(d125)
+flasks
+
+well6.3.14
+
+combined <- read.csv("20260320_1532_serinemut_125.csv")
+
+combined <- data.frame(combined$well.96, combined$well.24, combined$flasks)
+
+names <- c("96 Well", "24 well", "Flasks")
+
+names(combined) <- names
+combined
+
+boxplot(combined ,
+        xlab = "Concentration",
+        ylab = "OD600"
+       )
+
+combined.w <- combined %>%
+  pivot_longer(
+    cols = everything(),
+    names_to = "Treatment",
+    values_to = "OD600"
+  )
+combined.w<- na.omit(combined.w)
+combined.w
+
+aovflask<- aov(OD600 ~Treatment, data =combined.w)
+summary(aovflask)
+TukeyHSD(aovflask)
+
+
+
+
+
+
+
+
+```
+
+

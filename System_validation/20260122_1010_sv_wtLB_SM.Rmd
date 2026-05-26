@@ -1,0 +1,159 @@
+---
+title: "System validation"
+author: "Anna L"
+date: "2026-21-1"
+output: html_document
+---
+
+```{r}
+library(tidyr)
+library(ggplot2)
+library(stringr)
+library(dplyr)
+library(tidyverse)
+
+theme_set(theme_classic() +
+  theme(axis.title = element_text(size = 16),
+        axis.title.x = element_text(margin = margin(t = 15, b = 15)),
+        axis.title.y = element_text(margin = margin(l = 15, r = 15)),
+        axis.text = element_text(size = 13),
+        axis.text.x = element_text(margin = margin(t = 5)),
+        axis.text.y = element_text(margin = margin(r = 5)),
+        #axis.line.x = element_line(linewidth = 1),
+        #axis.line.y = element_line(linewidth = 1),
+        axis.line.x = element_blank(),
+        axis.line.y = element_blank(),
+        axis.ticks.x = element_line(linewidth = 1),
+        axis.ticks.y = element_line(linewidth = 1),
+        axis.ticks.length = unit(.1, "in"),
+        panel.border = element_rect(color = "grey20", fill = NA, linewidth = 1.5),
+        legend.text = element_text(size = 14),
+        strip.text = element_text(size = 14),
+        strip.background = element_blank()
+        ))
+```
+
+```{r}
+setwd("C:/Users/ajl21/github/division.labor/")
+
+data <- read.csv("C:/Users/ajl21/github/division.labor/Growth_Curves/test/20260206_growthcurveLBSM.csv")
+data
+
+time <-data$Time
+time <-na.omit(time)
+time <- time[1:(length(time) - 4)]
+
+
+blank.sm.v <- c(data$A1, data$B1, data$C1, data$D1, 
+              data$E1, data$F1, data$G1, data$H1)
+
+blank.sm.v <- mean(blank.sm.v, na.rm = TRUE)
+blank.sm.v
+
+blank.lb.v <- c(data$A7, data$B7, data$C7, data$D7, 
+              data$E7, data$F7, data$G7, data$H7)
+
+blank.lb <- mean(blank.lb.v, na.rm = TRUE)
+
+
+SM <- data[1:289, grep("^[A-H](2|3|4|5|6)$", colnames(data))]
+
+
+LB <- data[1:289, grep("^[A-H](8|9|10|11|12)$", colnames(data))]
+LB
+
+SM.c <- SM-blank.sm.v
+SM.c <-na.omit(SM.c)
+SM.c.t <- cbind(time,SM.c)
+SM.c.t
+
+LB.c <- LB-blank.lbLBSM.c.t.c <- LB-blank.lb
+LB.c <-na.omit(LB.c)
+LB.c.t <- cbind(time,LB.c)
+
+```
+
+
+```{r}
+SM_l <- SM.c.t %>%
+  pivot_longer(
+    cols = -time,
+    names_to = "Well",
+    values_to = "Value"
+  )
+
+SM_l
+
+SM_l$time_min <- with(
+  SM_long,
+  as.numeric(sub(":.*", "", time)) * 60 +
+  as.numeric(sub(".*:(.*):.*", "\\1", time)) +
+  as.numeric(sub(".*:", "", time)) / 60
+)
+
+SM_l
+
+ggplot(SM_long, aes(x = time_min, y = Value)) +
+  geom_point() +
+  labs(
+    x = "Time",
+    y = "OD",
+    title = "Growth Curve Scatter Plot"
+  )
+
+```
+
+```{r}
+LB_l <- LB.c.t %>%
+  pivot_longer(
+    cols = -time,
+    names_to = "Well",
+    values_to = "Value"
+  )
+
+LB_l
+
+LB_l$time_min <- with(
+  LB_l,
+  as.numeric(sub(":.*", "", time)) * 60 +
+  as.numeric(sub(".*:(.*):.*", "\\1", time)) +
+  as.numeric(sub(".*:", "", time)) / 60
+)
+
+
+
+ggplot(LB_l, aes(x = time_min, y = Value)) +
+  geom_point() +
+  labs(
+    x = "Time",
+    y = "OD",
+    title = "Growth Curve Scatter Plot"
+  )
+
+```
+
+```{r}
+LB_l
+SM_l
+
+LB_l$Media <- "LB"
+SM_l$Media <- "SM"
+
+
+combined <- bind_rows(
+  mutate(LB_l, Media = "LB"),
+  mutate(SM_l, Media = "SM")
+)
+
+ggplot(combined, aes(x = time_min, y = Value, color = Media)) +
+  geom_point() + scale_color_manual(values = c("black", "grey")) +
+  labs(
+    x = "Time (min)",
+    y = "OD600",
+    title = "Growth Over 24 hours"
+  ) 
+```
+
+```{r}
+combined
+```
