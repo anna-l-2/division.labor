@@ -1,0 +1,105 @@
+---
+title: "Dessication Evolution"
+author: "Anna L"
+date: "2026-06-12"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r}
+library(tidyr)
+library(ggplot2)
+library(stringr)
+library(dplyr)
+library(tidyverse)
+require(survival)
+library(purrr)
+require(extrafont)
+library(ggpmisc)
+library(broom)
+library(readxl)
+#install.packages("broom")
+
+theme_set(theme_classic() +
+  theme(axis.title = element_text(size = 16),
+        axis.title.x = element_text(margin = margin(t = 15, b = 15)),
+        axis.title.y = element_text(margin = margin(l = 15, r = 15)),
+        axis.text = element_text(size = 13),
+        axis.text.x = element_text(margin = margin(t = 5)),
+        axis.text.y = element_text(margin = margin(r = 5)),
+        #axis.line.x = element_line(linewidth = 1),
+        #axis.line.y = element_line(linewidth = 1),
+        axis.line.x = element_blank(),
+        axis.line.y = element_blank(),
+        axis.ticks.x = element_line(linewidth = 1),
+        axis.ticks.y = element_line(linewidth = 1),
+        axis.ticks.length = unit(.1, "in"),
+        panel.border = element_rect(color = "grey20", fill = NA, linewidth = 1.5),
+        legend.text = element_text(size = 14),
+        strip.text = element_text(size = 14),
+        strip.background = element_blank()
+        ))
+```
+
+```{r}
+setwd("C:/Users/ajl21/github/division.labor/Seed_Bank/")
+
+data<-  read_excel("20260923_1333_3610_SPO_cfu_ph.xlsx", sheet = "Sheet1")
+
+```
+
+
+
+
+```{r}
+cfu <- function(colony, dilution, volume){
+  DF <- 10^(-dilution)
+  (colony * DF) / volume
+}
+
+data <- data %>%
+  mutate(CFU = cfu(Count, Dilution, 0.1))
+
+
+ggplot(data, aes(Time, color = Type)) +
+  stat_summary(aes(y = log10(CFU)), fun = mean, geom = "line") + #CFU
+  stat_summary(aes(y = log10(CFU)), fun.data = mean_sdl,
+               fun.args = list(mult = 1), geom = "pointrange") +
+  scale_x_continuous(breaks = c(0, 48)) +
+  scale_y_continuous(
+    expression(log[10] * " CFU/mL"),
+    sec.axis = sec_axis(~ . - 2, name = "pH")
+  ) +
+  scale_color_manual(values = c(WT = "black", SPO = "grey"))
+
+
+
+```
+
+```{r}
+mean_data <- data %>%
+  group_by(Time, Type) %>%
+  summarise(
+    mean_CFU = mean(CFU, na.rm = TRUE),
+    mean_ph  = mean(ph, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+mean_data
+
+mean_data<- rename(mean_data, 
+             CFU = mean_CFU, 
+             ph = mean_ph)
+
+data$Time<-as.factor(data$Time)
+data$Type <- as.factor(data$Type)
+
+data.aov <-aov(CFU~Time*Type, data)
+summary(data.aov)
+
+post<-TukeyHSD(data.aov)
+```
+
+
+

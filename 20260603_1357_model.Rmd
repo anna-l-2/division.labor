@@ -1,0 +1,194 @@
+---
+title: "SIR Model "
+author: "Anna L"
+date: "2026-19-05"
+output: html_document
+---
+
+```{r}
+library(tidyr)
+library(ggplot2)
+library(stringr)
+library(dplyr)
+library(tidyverse)
+library(ggpubr)
+library(deSolve)
+
+theme_set(theme_classic() +
+  theme(axis.title = element_text(size = 16),
+        axis.title.x = element_text(margin = margin(t = 15, b = 15)),
+        axis.title.y = element_text(margin = margin(l = 15, r = 15)),
+        axis.text = element_text(size = 13),
+        axis.text.x = element_text(margin = margin(t = 5)),
+        axis.text.y = element_text(margin = margin(r = 5)),
+        #axis.line.x = element_line(linewidth = 1),
+        #axis.line.y = element_line(linewidth = 1),
+        axis.line.x = element_blank(),
+        axis.line.y = element_blank(),
+        axis.ticks.x = element_line(linewidth = 1),
+        axis.ticks.y = element_line(linewidth = 1),
+        axis.ticks.length = unit(.1, "in"),
+        panel.border = element_rect(color = "grey20", fill = NA, linewidth = 1.5),
+        legend.text = element_text(size = 14),
+        strip.text = element_text(size = 14),
+        strip.background = element_blank()
+        ))
+```
+
+
+
+```{r}
+ 
+dol <- function(ga, thetab, betaB, gb, betamin, gmin, mA, mB,
+                thetaa, Pa, Pb, betaA, d, A0, B0, a0, b0, times) {
+
+  library(deSolve)
+
+  dol_equations <- function(time, variables, parameters) {
+    with(as.list(c(variables, parameters)), {
+
+      dA <- A * (ga * thetab * gb * betaB * betamin * gmin - mA)
+      dB <- B * (gb * thetaa * ga * betaA * betamin * gmin - mB)
+      da <- A * Pa - A * ga - d * (A * thetaa - B * betaA * ga)
+      db <- B * Pb - B * gb - d * (B * thetab - A * betaB * gb)
+
+      list(c(dA, dB, da, db))
+    })
+    
+  }
+
+  parameters_values <- c(
+    ga = ga, thetab = thetab, betaB = betaB, gb = gb,
+    betamin = betamin, gmin = gmin, mA = mA, mB = mB,
+    thetaa = thetaa, Pa = Pa, Pb = Pb, betaA = betaA, d = d
+  )
+
+  initial_values <- c(A = A0, B = B0, a = a0, b = b0)
+
+  out <- ode(y = initial_values, times = times, func = dol_equations, parms = parameters_values)
+
+  as.data.frame(out)
+}
+
+dol_values <- dol(
+ga      = 0.05,
+gb      = 0.1,
+betaA   = 0.015,
+betaB   = 0.08,
+betamin = 0.001,
+gmin    = 0.001,
+mA      = 0.0001,
+mB      = 0.0001,
+d       = 0.1,
+A0      = 100,
+B0      = 100,
+a0      = 0,
+b0      = 0,
+thetaa = .001,
+thetab = .016,
+Pa = .1,
+Pb =.1,
+times = seq(0,1000))
+
+
+#Plot
+ggplot(dol_values, aes(x = time)) +
+  geom_line(aes(y = A, color = "SpeciesA")) +
+  geom_line(aes(y = B, color = "SpeciesB")) +
+  geom_line(aes(y = a, color = "Resourcea")) +
+  geom_line(aes(y=b, color = "Resourceb"))+
+  scale_color_manual(
+    values = c(
+      SpeciesA = "blue",
+      SpeciesB = "red",
+      Resourcea = "black",
+      Resourceb = "grey"
+    )
+  ) +
+  labs(
+    x = "Time (days)",
+    y = "Abundance",
+    color = NULL
+  )
+    
+```
+
+
+```{r}
+library(deSolve)
+library(ggplot2)
+
+crossfeed_model <- function(t, state, parms) {
+  with(as.list(c(state, parms)), {
+
+    # Saturation terms
+    phi_a <- a / (Ka + a)
+    phi_b <- b / (Kb + b)
+
+    # Consumer growth
+    dCA <- CA * (muA * min(phi_a, phi_b) - mA)
+    dCB <- CB * (muB * min(phi_a, phi_b) - mB)
+
+    # Resource dynamics
+    dRa <- CA * Pa - CA * ua * phi_a - CB * thetaA * muBa * phi_a
+    dRb <- CB * Pb - CB * ub * phi_b - CA * thetaB * muAb * phi_b
+
+    list(c(dCA, dCB, dRa, dRb))
+  })
+  
+}
+
+state <- c(
+  CA = 1,
+  CB = 1,
+  a = 0.9,
+  b = 0.5
+)
+
+parms <- c(
+  muA = 1.0,
+  muB = 1.0,
+  mA  = 0.01,
+  mB  = 0.1,
+  Ka  = 0.2,
+  Kb  = 0.2,
+  Pa  = 0.05,
+  Pb  = 0.05,
+  ua  = 0.4,
+  ub  = 0.4,
+  thetaA = 0.6,
+  thetaB = 0.3,
+  muBa = 0.7,
+  muAb = 0.7
+)
+
+times <- seq(0, 200, by = 0.1)
+
+out <- ode(y = state, times = times, func = crossfeed_model, parms = parms)
+
+    
+
+
+
+
+ggplot(dol_values, aes(x = time)) +
+  geom_line(aes(y = CA, color = "SpeciesA"), linewidth = 1) +
+  geom_line(aes(y = CB, color = "SpeciesB"), linewidth = 1) +
+  geom_line(aes(y = a,  color = "Resourcea"), linewidth = 1) +
+  geom_line(aes(y = b,  color = "Resourceb"), linewidth = 1) +
+  scale_color_manual(
+    values = c(
+      SpeciesA = "blue",
+      SpeciesB = "red",
+      Resourcea = "black",
+      Resourceb = "grey"
+    )
+  ) +
+  labs(
+    x = "Time (days)",
+    y = "Abundance",
+    color = NULL
+  ) +
+  theme_classic()
+
+```

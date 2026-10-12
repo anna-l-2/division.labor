@@ -1,0 +1,281 @@
+---
+title: "System validation"
+author: "Anna L"
+date: "2026-19-05"
+output: html_document
+---
+
+```{r}
+library(tidyr)
+library(ggplot2)
+library(stringr)
+library(dplyr)
+library(tidyverse)
+library(ggpubr)
+library(readxl)
+library(flextable)
+library(RcppRoll)
+theme_set(theme_classic() +
+  theme(axis.title = element_text(size = 16),
+        axis.title.x = element_text(margin = margin(t = 15, b = 15)),
+        axis.title.y = element_text(margin = margin(l = 15, r = 15)),
+        axis.text = element_text(size = 13),
+        axis.text.x = element_text(margin = margin(t = 5)),
+        axis.text.y = element_text(margin = margin(r = 5)),
+        #axis.line.x = element_line(linewidth = 1),
+        #axis.line.y = element_line(linewidth = 1),
+        axis.line.x = element_blank(),
+        axis.line.y = element_blank(),
+        axis.ticks.x = element_line(linewidth = 1),
+        axis.ticks.y = element_line(linewidth = 1),
+        axis.ticks.length = unit(.1, "in"),
+        panel.border = element_rect(color = "grey20", fill = NA, linewidth = 1.5),
+        legend.text = element_text(size = 14),
+        strip.text = element_text(size = 14),
+        strip.background = element_blank()
+        ))
+```
+
+```{r}
+setwd("C:/Users/ajl21/github/division.labor/prelim_coexistence/")
+
+AL <-  read_excel("20260710_1137_Kost_prelimco.xlsx", sheet = "AL")
+AH <- read_excel("20260710_1137_Kost_prelimco.xlsx", sheet = "AH")
+HTH <-  read_excel("20260710_1137_Kost_prelimco.xlsx", sheet = "HTH")
+TTH <- read_excel("20260710_1137_Kost_prelimco.xlsx", sheet = "TTH")
+TrL <-  read_excel("20260710_1137_Kost_prelimco.xlsx", sheet = "TrL")
+TrH <-  read_excel("20260710_1137_Kost_prelimco.xlsx", sheet = "TrH")
+ATh <-  read_excel("20260710_1137_Kost_prelimco.xlsx", sheet = "ATh")
+ATr <-  read_excel("20260710_1137_Kost_prelimco.xlsx", sheet = "ATr")
+LTH <-  read_excel("20260710_1137_Kost_prelimco.xlsx", sheet = "LTh")
+HL <- read_excel("20260710_1137_Kost_prelimco.xlsx", sheet = "HL")
+
+long <- function(data, culture) {
+  data |>
+    pivot_longer(
+      cols = everything(),
+      names_to = "Day",
+      values_to = "OD"
+    ) |>
+    dplyr::mutate(Culture = culture)
+}
+
+AH.L <- long(AH, "Ala+His")
+AL.L <- long(AL, "Ala+Lys")
+HTH.L <- long(HTH,"His+Theo")
+TTH.L <- long(TTH,"Trp+Theo")
+TrL.L <- long(TrL,"Trp+Lys")
+TrH.L <- long(TrH,"Trp+His")
+ATh.L <- long(ATh,"Ala+Theo")
+ATr.L <- long(ATr,"Ala+Trp")
+LTH.L <- long(LTH,"Lys+Theo")
+HL.L  <- long(HL,"His+Lys")
+
+combined<- rbind(AL.L,HTH.L,TTH.L,TrL.L,TrH.L,ATh.L,ATr.L,LTH.L,HL.L)
+combined$Day <- factor(combined$Day,
+                 levels = c("2", "3", "4", "5", "6", "7", "8", "9",
+                            "10", "11", "13", "14", "15"))
+
+combined <- combined %>%
+  group_by(Culture) %>%
+  mutate(Replicate = rep(1:3, each = n() / 3)) %>%
+  ungroup()
+
+combined<-na.omit(combined)
+
+ggplot(combined, aes(x=Day, y=OD, group=Culture, color= Culture)) + geom_smooth(se=FALSE)+labs(color = "Culture", y = "OD600", x= "Day")+ theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) + scale_y_continuous(breaks = seq(0, 6, by = .5))
+
+
+ggplot(combined, aes(x = Day, y = OD, group = Culture)) +geom_point()+
+  geom_smooth() +
+  facet_wrap(~ Culture, ncol = 3) +
+  labs(x = "Day", y = "OD600", color = "Culture") +
+  scale_y_continuous(breaks = seq(0, 2, by = 0.5)) +
+  theme_minimal(base_size = 12) +
+  theme(
+    axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1),
+    strip.text = element_text(face = "bold"),
+    legend.position = "bottom"
+  )
+#+theme(panel.grid.major.y = element_blank(), panel.grid.minor.y = element_blank())
+
+
+```
+
+
+```{r}
+
+temporal.stability <- combined %>%
+  group_by(Culture, Replicate) %>%
+  summarise(
+    Mean = mean(OD),
+    SD = sd(OD),
+    Stability = Mean / SD,
+    Temporal.Variability = SD / Mean,
+    .groups = "drop")
+
+
+#temporal.stability%>%gt()
+
+temp.table<-temporal.stability %>%
+  flextable() %>%
+  colformat_double(digits = 3) %>%
+  set_header_labels(
+    Mean = "Mean OD",
+    Stability = "Stability (Mean/SD)",
+    Temporal.Variability = "Temporal Variability",
+    Replicate = "Replicate"
+  ) %>%
+  autofit()
+
+
+#print(temp.table, preview = "html", align = "center")
+
+
+ggplot(temporal.stability, aes(x=Culture, y=Temporal.Variability, group = Culture)) +geom_boxplot()+ geom_point()+ labs(y= "Temporal Variability", color = "Type")+ theme(axis.text.x = element_text(angle = 65, vjust = 1, hjust = 1))
+
+
+
+```
+
+```{r}
+#Stability using a rolling window
+win.size <- 5   # 5-day sliding window
+
+rolling.stability <- combined %>%
+  arrange(Culture, Replicate, Day) %>%   # ensure days are in order
+  group_by(Culture, Replicate) %>%
+  summarise(
+    Day = RcppRoll::roll_mean(as.numeric(as.character(Day)),
+                              n = win.size,
+                              align = "center",
+                              fill = NA),
+    Mean = RcppRoll::roll_mean(OD,
+                               n = win.size,
+                               align = "center",
+                               fill = NA),
+    SD = RcppRoll::roll_sd(OD,
+                           n = win.size,
+                           align = "center",
+                           fill = NA),
+    Stability = Mean / SD,
+    Temporal.Variability = SD / Mean,
+    .groups = "drop"
+  ) %>%
+  filter(!is.na(Day))
+
+rolling.summary <- rolling.stability %>%
+  group_by(Culture, Day) %>%
+  summarise(
+    Mean.Stability = mean(Stability, na.rm = TRUE),
+    SD = sd(Stability, na.rm = TRUE),
+    n = n(),
+    SEM = SD / sqrt(n),
+    .groups = "drop"
+  )
+
+ggplot(rolling.summary,
+       aes(x = Day, y = Mean.Stability, color = Culture)) +
+  geom_line() +
+  geom_point() +
+  geom_errorbar(aes(ymin = Mean.Stability - SEM,
+                    ymax = Mean.Stability + SEM),
+                width = 0.2) +
+  theme_classic() +
+  labs(y = "Temporal Stability",
+       x = "Day")
+```
+
+
+
+```{r}
+setwd("C:/Users/ajl21/github/division.labor/prelim_coexistence/")
+A.1L1 <-  read_excel("20260720_1708_Kost_prelimco_ind.xlsx", sheet = ".1A1L")
+A1L.1 <-  read_excel("20260720_1708_Kost_prelimco_ind.xlsx", sheet = "1A.1L")
+AL <-  read_excel("20260720_1708_Kost_prelimco_ind.xlsx", sheet = "AL")
+long <- function(data, culture) {
+  data |>
+    pivot_longer(
+      cols = everything(),
+      names_to = "Day",
+      values_to = "OD"
+    ) |>
+    dplyr::mutate(Culture = culture)
+}
+A.1L1 <-  long(A.1L1, ".1Arg+1Lys")
+A1L.1 <-  long(A1L.1, "1Arg+.1Lys")
+AL <- long(AL, "1Arg+1Lys")
+
+combined<- rbind(A.1L1,A1L.1,AL)
+combined$Day <- factor(combined$Day,
+                 levels = c("2", "4", "6",  "8"))
+combined <- combined %>%
+  group_by(Culture) %>%
+  mutate(Replicate = rep(1:3, each = n() / 3)) %>%
+  ungroup()
+
+
+ggplot(combined, aes(x = Day, y = OD, group = Culture)) +geom_point()+
+  geom_smooth() +
+  facet_wrap(~ Culture, ncol = 3) +
+  labs(x = "Day", y = "OD600", color = "Culture") +
+  scale_y_continuous(breaks = seq(0, 2, by = 0.5)) +
+  theme_minimal(base_size = 12) +
+  theme(
+    axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1),
+    strip.text = element_text(face = "bold"),
+    legend.position = "bottom"
+  )
+
+
+#Stability
+coefvar.in <- combined %>%
+  group_by(Culture, Day) %>%
+  summarise(
+    Mean = mean(OD, na.rm = TRUE),
+    SD = sd(OD, na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  mutate(CV = Mean / SD)
+
+
+ggplot(coefvar.in, aes(x=Day, y=CV, group = Culture)) +geom_point()+ geom_smooth(se=FALSE)+labs(y= "Stability")+ theme(axis.text.x = element_text(angle = 65, vjust = 1, hjust = 1)) +facet_wrap(~ Culture, ncol = 3)
+
+
+#Temporal Variability
+daily.means <- combined %>%
+  group_by(Culture, Replicate) %>%
+  summarise(
+    Mean.OD = mean(OD, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+
+temporal.stability <- daily.means %>%
+  group_by(Culture, Replicate) %>%
+  summarise(
+    Mean = mean(Mean.OD),
+    SD = sd(Mean.OD),
+    Stability = Mean / SD,
+    Temporal.Variability = SD / Mean,
+    .groups = "drop")
+
+
+
+temp.table<-temporal.stability %>%
+  flextable() %>%
+  colformat_double(digits = 3) %>%
+  set_header_labels(
+    Mean = "Mean OD",
+    Stability = "Stability (Mean/SD)",
+    Temporal.Variability = "Temporal Variability",
+    Replicate = "Replicate"
+  ) %>%
+  autofit()
+
+
+# ggplot(temporal.stability, aes(x=Culture, y=Temporal.Variability, group = Culture)) +geom_boxplot()+ geom_point()+ labs(y= "Temporal Variability", color = "Type")+ theme(axis.text.x = element_text(angle = 65, vjust = 1, hjust = 1))
+
+
+```
+  
