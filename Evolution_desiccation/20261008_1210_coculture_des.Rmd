@@ -1,0 +1,114 @@
+---
+title: "Dessication Evolution"
+author: "Anna L"
+date: "2026-10-08"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r}
+library(tidyr)
+library(ggplot2)
+library(stringr)
+library(dplyr)
+library(tidyverse)
+require(survival)
+library(purrr)
+require(extrafont)
+library(tidyr)
+library(ggpmisc)
+library(broom)
+
+#install.packages("paletteer")
+
+theme_set(theme_classic() +
+  theme(axis.title = element_text(size = 16),
+        axis.title.x = element_text(margin = margin(t = 15, b = 15)),
+        axis.title.y = element_text(margin = margin(l = 15, r = 15)),
+        axis.text = element_text(size = 13),
+        axis.text.x = element_text(margin = margin(t = 5)),
+        axis.text.y = element_text(margin = margin(r = 5)),
+        #axis.line.x = element_line(linewidth = 1),
+        #axis.line.y = element_line(linewidth = 1),
+        axis.line.x = element_blank(),
+        axis.line.y = element_blank(),
+        axis.ticks.x = element_line(linewidth = 1),
+        axis.ticks.y = element_line(linewidth = 1),
+        axis.ticks.length = unit(.1, "in"),
+        panel.border = element_rect(color = "grey20", fill = NA, linewidth = 1.5),
+        legend.text = element_text(size = 14),
+        strip.text = element_text(size = 14),
+        strip.background = element_blank()
+        ))
+```
+
+```{r}
+setwd("C:/Users/ajl21/github/division.labor/Evolution_desiccation/")
+#data: Turbidity 0 alive 1 death; Did not track same cultures over time just replicates
+data <- read.csv("20261012_1127_coculture_des_ArgTrp.csv")
+data$Replicate <- c(rep(1:4))
+
+```
+
+
+
+
+```{r}
+
+data$Time_factor <- factor(data$Time)
+
+fit <- glm(
+  Event ~ Strain * Time_factor,
+  data = data,
+  family = binomial
+)
+
+anova(fit, test = "Chisq")
+
+```
+
+
+```{r}
+plot_data <- data %>%
+  group_by(Strain, Time) %>%
+  summarise(
+    n = n(),
+    events = sum(Event),
+    proportion = mean(Event),
+    .groups = "drop"
+  )
+
+plot_data$Strain <- dplyr::recode(
+  plot_data$Strain,
+  "ARGsTRPs" = "Arg(S) + Trp(S)",
+  "ARGsTRPw" = "Arg(S) + Trp(WT)",
+  "ARGwTRPs" = "Arg(WT) + Trp(S)",
+  "ARGwTRPw" = "Arg(WT) + Trp(WT)"
+)
+
+ggplot(plot_data,
+       aes(x = Time, y = proportion,
+           color = Strain, group = Strain)) +
+  geom_line() +
+  geom_point() +
+  scale_y_continuous(
+    limits = c(0, 1),
+    breaks = seq(0, 1, 0.25),
+    labels = scales::percent
+  ) +
+  labs(
+    x = "Time (hours)",
+    y = "Morality Rate",
+    color = "Strain"
+  ) +
+scale_color_grey()
+
+
+```
+
+
+
+
+
+
