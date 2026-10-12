@@ -1,0 +1,165 @@
+---
+title: "SIR Model "
+author: "Anna L"
+date: "2026-19-05"
+output: html_document
+---
+
+```{r}
+library(tidyr)
+library(ggplot2)
+library(stringr)
+library(dplyr)
+library(tidyverse)
+library(ggpubr)
+library(deSolve)
+
+theme_set(theme_classic() +
+  theme(axis.title = element_text(size = 16),
+        axis.title.x = element_text(margin = margin(t = 15, b = 15)),
+        axis.title.y = element_text(margin = margin(l = 15, r = 15)),
+        axis.text = element_text(size = 13),
+        axis.text.x = element_text(margin = margin(t = 5)),
+        axis.text.y = element_text(margin = margin(r = 5)),
+        #axis.line.x = element_line(linewidth = 1),
+        #axis.line.y = element_line(linewidth = 1),
+        axis.line.x = element_blank(),
+        axis.line.y = element_blank(),
+        axis.ticks.x = element_line(linewidth = 1),
+        axis.ticks.y = element_line(linewidth = 1),
+        axis.ticks.length = unit(.1, "in"),
+        panel.border = element_rect(color = "grey20", fill = NA, linewidth = 1.5),
+        legend.text = element_text(size = 14),
+        strip.text = element_text(size = 14),
+        strip.background = element_blank()
+        ))
+```
+
+
+
+```{r}
+ 
+dol <- function(ga, thetab, betaB, gb, betamin, gmin, mA, mB,
+                thetaa, Pa, Pb, betaA, d, A0, B0, a0, b0, times) {
+
+  library(deSolve)
+
+  dol_equations <- function(time, variables, parameters) {
+    with(as.list(c(variables, parameters)), {
+
+      #dA <- A * (ga * thetab * gb * betaB * betamin * gmin - mA)
+      #dB <- B * (gb * thetaa * ga * betaA * betamin * gmin - mB)
+      dA <- A * (ga * thetab/(Kb + b) - mA)
+      dB <- B * (gb * thetaa /(Ka + a) - mB)
+      da <- A * Pa - A * ga - d * (A * thetaa - B * betaA * ga)
+      db <- B * Pb - B * gb - d * (B * thetab - A * betaB * gb)
+
+      list(c(dA, dB, da, db))
+    })
+  }
+
+  parameters_values <- c(
+    ga = ga, thetab = thetab, betaB = betaB, gb = gb,
+    betamin = betamin, gmin = gmin, mA = mA, mB = mB,
+    thetaa = thetaa, Pa = Pa, Pb = Pb, betaA = betaA, d = d
+  )
+
+  initial_values <- c(A = A0, B = B0, a = a0, b = b0)
+
+  out <- ode(y = initial_values, times = times, func = dol_equations, parms = parameters_values)
+
+  as.data.frame(out)
+}
+
+dol_values <- dol(
+ga      = 0.05,
+gb      = 0.1,
+betaA   = 0.015,
+betaB   = 0.08,
+betamin = 0.001,
+gmin    = 0.001,
+mA      = 0.0001,
+mB      = 0.0001,
+d       = 0.1,
+A0      = 100,
+B0      = 100,
+a0      = 0,
+b0      = 0,
+thetaa = .001,
+thetab = .016,
+Pa = .1,
+Pb =.1,
+times = seq(0,1000))
+
+
+#Plot
+ggplot(dol_values, aes(x = time)) +
+  geom_line(aes(y = A, color = "SpeciesA")) +
+  geom_line(aes(y = B, color = "SpeciesB")) +
+  geom_line(aes(y = a, color = "Resourcea")) +
+  geom_line(aes(y=b, color = "Resourceb"))+
+  scale_color_manual(
+    values = c(
+      SpeciesA = "blue",
+      SpeciesB = "red",
+      Resourcea = "black",
+      Resourceb = "grey"
+    )
+  ) +
+  labs(
+    x = "Time (days)",
+    y = "Abundance",
+    color = NULL
+  )
+    
+```
+
+
+```{r}
+sdir <- function(beta, gamma, deltaI, deltaR, muE, muI, D0, S0, I0, R0, times) { 
+  require(deSolve) #set parameters beta, gamma, S0, I0, R0, and times (time of outbreak)
+  
+  sir_equations <- function(time, variables, parameters) {
+  with(as.list(c(variables, parameters)), {
+    dS <- -beta * I * S - muE*S #S equation
+    dD <-  muE*S+muI*I - D*deltaI -deltaR*D
+    dI <-  beta * I * S - gamma * I+D*deltaI-I*(gamma+muI) #I equation
+    dR <-  gamma * I +deltaR*D#R equation
+    return(list(c(dS, dD, dI, dR)))
+  })
+  }
+  
+  parameters <- c(beta  = beta, gamma = gamma, deltaI = deltaI, deltaR=deltaR, muE=muE, muI=muI) #set parameter values
+
+  val0 <- c(S = S0, I = I0, R = R0, D=D0) #initial starting conditions
+  
+  out <- ode(val0, times, sir_equations, parameters) #output of the solved ODE 
+  
+  as.data.frame(out)
+}
+
+sdir_values<-sdir(beta = 0.004, gamma = 0.5, deltaI=.01, deltaR=.001, muE= .004, muI=.004, D0=1, S0 = 999, I0 = 1, R0 = 0, times = seq(0, 30))
+#sir_values<-c("beta = 0.05", "gamma = 0.25", "S0 = 1000", "I0 = 1", "R0 = 0", "Time = (0, 10)")
+
+
+#Plot
+ggplot(sdir_values, aes(x = time)) +
+  geom_line(aes(y = S, color = "susceptibles")) +
+  geom_line(aes(y = D, color = "dormant")) +
+  geom_line(aes(y = I, color = "infectious")) +
+  geom_line(aes(y = R, color = "recovered")) +
+  scale_color_manual(
+    values = c(
+      susceptibles = "blue",
+      dormant ="black",
+      infectious = "red",
+      recovered = "green"
+    )
+  ) +
+  labs(
+    x = "Time (days)",
+    y = "Number of Cases",
+    color = NULL
+  )
+
+```

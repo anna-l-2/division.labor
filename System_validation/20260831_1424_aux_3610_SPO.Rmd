@@ -1,0 +1,68 @@
+---
+title: "System validation Spore"
+author: "Anna L"
+date: "2026-19-05"
+output: html_document
+---
+
+```{r}
+library(tidyr)
+library(ggplot2)
+library(stringr)
+library(dplyr)
+library(tidyverse)
+library(ggpubr)
+library(readxl)
+library(flextable)
+library(RcppRoll)
+library(rstatix)
+library(emmeans)
+library(multcomp)
+library(multcompView)
+theme_set(theme_classic() +
+  theme(axis.title = element_text(size = 16),
+        axis.title.x = element_text(margin = margin(t = 15, b = 15)),
+        axis.title.y = element_text(margin = margin(l = 15, r = 15)),
+        axis.text = element_text(size = 13),
+        axis.text.x = element_text(margin = margin(t = 5)),
+        axis.text.y = element_text(margin = margin(r = 5)),
+        #axis.line.x = element_line(linewidth = 1),
+        #axis.line.y = element_line(linewidth = 1),
+        axis.line.x = element_blank(),
+        axis.line.y = element_blank(),
+        axis.ticks.x = element_line(linewidth = 1),
+        axis.ticks.y = element_line(linewidth = 1),
+        axis.ticks.length = unit(.1, "in"),
+        panel.border = element_rect(color = "grey20", fill = NA, linewidth = 1.5),
+        legend.text = element_text(size = 14),
+        strip.text = element_text(size = 14),
+        strip.background = element_blank()
+        ))
+```
+
+```{r}
+setwd("C:/Users/ajl21/github/division.labor/System_validation/")
+
+WT<-  read_excel("20260831_1423_systemvalidation_auxo_3610_spo.xlsx", sheet = "3610")
+SPO <- read_excel("20260831_1423_systemvalidation_auxo_3610_spo.xlsx", sheet = "SPOIIE")
+
+WT$Type <- c("3610")
+SPO$Type <- c("SPOIIE")
+
+
+combined<- rbind(WT, SPO)
+
+ggplot(combined, aes(x=Strain, y=OD, fill=Media)) +
+    geom_boxplot() +facet_wrap(~Type)+ theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))+ 
+  scale_y_continuous(breaks = seq(0, 4, by = .2))
+
+   
+
+
+```
+
+
+
+
+
+  

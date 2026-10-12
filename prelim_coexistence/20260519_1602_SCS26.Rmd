@@ -136,6 +136,8 @@ phetyr.short <- subset(
 
 combined  <- rbind(coexist.ser, phetyr.short)
 
+combined
+
 ggplot(coexist.ser, aes(x=Time, y=OD600, group=Sample, color= Sample)) +geom_point()+ geom_smooth(se=FALSE)+labs(color = "Type")+ theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) + scale_y_continuous(breaks = seq(0, 6, by = .5))
 
 
@@ -219,4 +221,33 @@ ggplot(day.c, aes(x=Type, y=OD600, color = Type)) +geom_boxplot() + scale_y_cont
     label = "p.signif"
   )
 
+```
+
+
+```{r} 
+combined
+
+coefvar <- combined %>%
+  group_by(Type, Time) %>%
+  summarise(
+    Mean = mean(OD600, na.rm = TRUE),
+    SD = sd(OD600, na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  mutate(CV = Mean / SD)
+coefvar.day <-coefvar %>%  filter(Time == "Day 5")
+
+aovcoef.day <- aov(CV ~ Type, data = coefvar.day)
+summary(aovcoef.day)
+TukeyHSD(aovcoef.day)
+
+aovcoef.day <- aov(CV ~ Type, data = coefvar.day)
+summary(aovcoef.day)
+TukeyHSD(aovcoef.day)
+
+coefvar
+
+ggplot(coefvar, aes(x=Time, y=CV, group = Type, color = Type)) +geom_point()+ geom_smooth(se=FALSE)+labs(y= "Stability", color = "Type")+ theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) +scale_color_manual(values=c("firebrick3", "burlywood3", "black"))
+
+#+theme(legend.position = "bottom")+
 ```
